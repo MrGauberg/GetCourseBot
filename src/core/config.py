@@ -1,0 +1,33 @@
+import logging
+from aiogram import Bot, Dispatcher, Router
+from .settings import user_settings, redis_settings
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
+from src.core.text import get_text
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+logging.basicConfig(level=logging.INFO)
+file_handler = logging.FileHandler('bot.log')
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+file_handler.setFormatter(formatter)
+file_handler.setLevel(logging.ERROR)
+logging.getLogger().addHandler(file_handler)
+
+form_router = Router()
+view_router = Router()
+
+if redis_settings.REDIS_HOST:
+    storage = RedisStorage(
+          host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT
+    )
+else:
+    storage = MemoryStorage()
+
+bot = Bot(token=user_settings.BOT_TOKEN, parse_mode='HTML')
+dp = Dispatcher(storage=storage)
+TG_SUPPORT = f"https://t.me/{user_settings.USER_TG_NAME}"
+scheduler = AsyncIOScheduler()
+
+texts = get_text("texts.json")
