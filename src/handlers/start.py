@@ -3,12 +3,19 @@ from aiogram import Router, Dispatcher, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
 from src.core.config import texts
+from src.core.settings import user_settings
 from src.keyboards.main_menu_kb import main_menu
-
+from src.services.application_client import application_client
 from typing import Union
 
 
 async def on_start(message: Message):
+    tg_user_data = {
+        'tg_id': message.from_user.id,
+        'user_name': message.from_user.username,
+        'teacher_id': user_settings.USER_ID
+    }
+    await application_client.create_students(tg_user_data)
     await message.answer(
         text=texts['start_text'],
         reply_markup=await main_menu()
