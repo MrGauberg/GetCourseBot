@@ -17,12 +17,16 @@ async def main():
     )
     from src.handlers import (
         start,
-        course
+        course,
+        lesson,
+        assigment
     )
     from src.services.application_client import application_client
 
     start.register_handler(dp)
     course.register_handler(view_router)
+    lesson.register_handler(view_router)
+    assigment.register_handler(view_router)
     dp.include_router(form_router)
     dp.include_router(view_router)
     try:

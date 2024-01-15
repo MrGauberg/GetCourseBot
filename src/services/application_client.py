@@ -23,6 +23,12 @@ class AplicationEndpoints:
     def _check_payment_url(self, student_id, course_id):
         return f"{self.BASE_API_URL}/student/check-payment/{student_id}/{course_id}/"
 
+    def _lesson_list_url(self, course_id, page):
+        return f"{self.BASE_API_URL}/student-course/{course_id}/lessons/?page={page}"
+
+    def _assignment_list_url(self, lesson_id):
+        return f"{self.BASE_API_URL}/student-course/lessons/{lesson_id}/assignments"
+
 
 class ApplicationClient(AplicationEndpoints):
 
@@ -63,6 +69,16 @@ class ApplicationClient(AplicationEndpoints):
     async def get_courses_by_student_id(self, tg_user_id: int, page: int) -> Any:
         url = self._student_courses_url(tg_user_id, page)
         return await self._make_request("GET", url)
+
+    async def get_lessons_by_course_id(self, course_id,  page: int):
+        return await self._make_request(
+            "GET", self._lesson_list_url(course_id, page)
+        )
+
+    async def get_assignments_by_lesson_id(self, lesson_id):
+        return await self._make_request(
+            "GET", self._assignment_list_url(lesson_id)
+        )
 
 
 application_client = ApplicationClient()

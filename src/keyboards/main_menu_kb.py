@@ -1,3 +1,4 @@
+from typing import List
 from aiogram.types import (InlineKeyboardMarkup,
                            InlineKeyboardButton)
 
@@ -45,5 +46,29 @@ async def buyed_course_details(course_id: int, page: int):
             text=texts["back_button"],
             callback_data=f"page_view_courses_student {page}")],
         [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")],
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=btns)
+
+
+async def lesson_details_kb(page: int, assigments: List):
+    btns = [
+        [
+            InlineKeyboardButton(
+                text=texts["homework"].format(i+1),
+                callback_data=f"homework {assigment['id']}"
+            )
+        ] for i, assigment in enumerate(assigments)
+    ]
+    btns.extend([
+        [InlineKeyboardButton(text=texts["back_button"], callback_data=f"page_view_lessons {page}")],
+        [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")],
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=btns)
+
+
+async def assigment_kb(lesson_id: int):
+    btns = [
+        [InlineKeyboardButton(text=texts["back_button"], callback_data=f"lessons {lesson_id}")],
+        [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=btns)

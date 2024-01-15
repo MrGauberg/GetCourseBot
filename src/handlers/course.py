@@ -5,10 +5,10 @@ from aiogram.types import (
 )
 from src.core.config import texts, bot
 from src.keyboards.main_menu_kb import (
-    buyed_course_details, course_details_kb
+    buyed_course_details, course_details_kb, main_menu
 )
 from src.keyboards.pagination_kb import generate_db_items_keyboard
-from src.misc.course_utils import get_course
+from src.misc.course_utils import get_item
 from src.misc.fabrics import create_page_hanler
 from src.services.application_client import application_client
 from src.core.settings import user_settings
@@ -53,8 +53,8 @@ async def all_courses_handler(call: CallbackQuery,
 async def get_course_handler(call: CallbackQuery,
                              state: FSMContext):
 
-    course = await get_course(call, state)
     data = await state.get_data()
+    course = await get_item(call, data['courses'])
 
     text = texts['course_details'].format(
         course['title'],
@@ -87,8 +87,9 @@ async def student_courses_handler(call: CallbackQuery,
 
 async def student_course_handler(call: CallbackQuery,
                                  state: FSMContext):
-    course = await get_course(call, state)
-    data = await state.get_data()
+    course_id = int(call.data.split()[1])
+    data = await state.update_data(course_id=course_id)
+    course = await get_item(call, data['courses'])
 
     text = texts['course_details'].format(
         course['title'],
