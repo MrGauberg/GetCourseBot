@@ -1,6 +1,7 @@
 import httpx
 from src.core.settings import application_settings
 from typing import Dict, Any
+from aiogram.types import Document
 
 
 class AplicationEndpoints:
@@ -17,11 +18,18 @@ class AplicationEndpoints:
         return f"{self.BASE_API_URL}/student/create-student/"
 
     @property
+    def _create_assignment_response_url(self):
+        return f"{self.BASE_API_URL}/student/create-assignment-response/"
+
+    @property
     def _student_paymant_url(self):
         return f"{self.BASE_API_URL}/student/paymant/create/"
 
     def _check_payment_url(self, student_id, course_id):
         return f"{self.BASE_API_URL}/student/check-payment/{student_id}/{course_id}/"
+
+    def _check_assignment_response_url(self, student_id, assignment_id):
+        return f"{self.BASE_API_URL}/student/check-assignment-response/{student_id}/{assignment_id}/"
 
     def _lesson_list_url(self, course_id, page):
         return f"{self.BASE_API_URL}/student-course/{course_id}/lessons/?page={page}"
@@ -40,13 +48,24 @@ class ApplicationClient(AplicationEndpoints):
             await self.client.aclose()
 
     async def _make_request(
-            self,
-            method: str,
-            url: str,
-            data: Dict[str, Any] = None
+        self,
+        method: str,
+        url: str,
+        data: Dict[str, Any] = None,
+        files: Dict[str, Any] = None
     ) -> Any:
         try:
-            response = await self.client.request(method, url, json=data)
+            if files:
+                # Подготовка данных и файлов для мультипарт-формы
+                multipart_data = {}
+                for key, value in data.items():
+                    multipart_data[key] = (None, str(value))
+                for file_key, file_value in files.items():
+                    multipart_data[file_key] = file_value
+                response = await self.client.request(method, url, files=multipart_data)
+            else:
+                # Отправка данных в формате JSON, если файлов нет
+                response = await self.client.request(method, url, json=data)
             return response.json()
         except httpx.HTTPError as error:
             print(error)
@@ -60,6 +79,11 @@ class ApplicationClient(AplicationEndpoints):
     async def check_payment(self, student_id, course_id):
         return await self._make_request(
             "GET", self._check_payment_url(student_id, course_id)
+        )
+
+    async def check_assignment_response(self, student_id, assignment_id):
+        return await self._make_request(
+            "GET", self._check_assignment_response_url(student_id, assignment_id)
         )
 
     async def get_courses_by_user_id(self, user_id: int, page: int) -> Any:
@@ -78,6 +102,12 @@ class ApplicationClient(AplicationEndpoints):
     async def get_assignments_by_lesson_id(self, lesson_id):
         return await self._make_request(
             "GET", self._assignment_list_url(lesson_id)
+        )
+
+    async def create_assignment_response(self, data: Dict, files=None) -> Any:
+
+        return await self._make_request(
+            "POST", self._create_assignment_response_url, data, files
         )
 
 

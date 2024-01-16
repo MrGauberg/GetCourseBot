@@ -41,14 +41,14 @@ async def lesson_handler(call: CallbackQuery,
 
     text = get_item_text(texts, lesson)
 
-    assigments = await application_client.get_assignments_by_lesson_id(
+    assignments = await application_client.get_assignments_by_lesson_id(
         lesson['id']
     )
-    await state.update_data(assigments=assigments)
+    await state.update_data(assignments=assignments)
     await call.message.edit_text(
         text=text,
         reply_markup=await lesson_details_kb(
-            data['lessons_page'], assigments),
+            data['lessons_page'], assignments),
         disable_web_page_preview=True
     )
 

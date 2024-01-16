@@ -50,14 +50,14 @@ async def buyed_course_details(course_id: int, page: int):
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
-async def lesson_details_kb(page: int, assigments: List):
+async def lesson_details_kb(page: int, assignments: List):
     btns = [
         [
             InlineKeyboardButton(
                 text=texts["homework"].format(i+1),
-                callback_data=f"homework {assigment['id']}"
+                callback_data=f"homework {assignment['id']}"
             )
-        ] for i, assigment in enumerate(assigments)
+        ] for i, assignment in enumerate(assignments)
     ]
     btns.extend([
         [InlineKeyboardButton(text=texts["back_button"], callback_data=f"page_view_lessons {page}")],
@@ -66,9 +66,26 @@ async def lesson_details_kb(page: int, assigments: List):
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
-async def assigment_kb(lesson_id: int):
+async def assignment_kb(lesson_id: int, assignment_id, exists):
+
     btns = [
+        [
+            InlineKeyboardButton(text=texts["pull_assignment"],
+                                 callback_data=f"pull_assignment {assignment_id}") 
+            if not exists else
+            InlineKeyboardButton(text=texts["pull_assignment_not"],
+                                 callback_data=f" ")
+        ],
         [InlineKeyboardButton(text=texts["back_button"], callback_data=f"lessons {lesson_id}")],
+        [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=btns)
+
+
+async def assignment_respones_kb(back_call):
+    btns = [
+        [InlineKeyboardButton(text=texts["skip_btn"], callback_data=f"skip_btn")],
+        [InlineKeyboardButton(text=texts["back_button"], callback_data=back_call)],
         [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=btns)

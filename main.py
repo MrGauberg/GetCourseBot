@@ -1,6 +1,7 @@
 import asyncio
 from aiogram import Bot
 from pytz import timezone
+from src.handlers import assignment
 
 from src.misc.set_bot_commands import set_commands
 
@@ -18,17 +19,16 @@ async def main():
     from src.handlers import (
         start,
         course,
-        lesson,
-        assigment
+        lesson
     )
     from src.services.application_client import application_client
 
     start.register_handler(dp)
     course.register_handler(view_router)
     lesson.register_handler(view_router)
-    assigment.register_handler(view_router)
-    dp.include_router(form_router)
+    assignment.register_handler(view_router, form_router)
     dp.include_router(view_router)
+    dp.include_router(form_router)
     try:
         await on_startup(bot)
         await dp.start_polling(bot)
