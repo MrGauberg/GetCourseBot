@@ -3,6 +3,7 @@ from aiogram.types import (InlineKeyboardMarkup,
                            InlineKeyboardButton)
 
 from src.core.config import texts, TG_SUPPORT
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 
 async def main_menu():
@@ -74,7 +75,7 @@ async def assignment_kb(lesson_id: int, assignment_id, exists):
                                  callback_data=f"pull_assignment {assignment_id}") 
             if not exists else
             InlineKeyboardButton(text=texts["pull_assignment_not"],
-                                 callback_data=f" ")
+                                 callback_data=" ")
         ],
         [InlineKeyboardButton(text=texts["back_button"], callback_data=f"lessons {lesson_id}")],
         [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")]
@@ -85,6 +86,21 @@ async def assignment_kb(lesson_id: int, assignment_id, exists):
 async def assignment_respones_kb(back_call):
     btns = [
         [InlineKeyboardButton(text=texts["skip_btn"], callback_data=f"skip_btn")],
+        [InlineKeyboardButton(text=texts["back_button"], callback_data=back_call)],
+        [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=btns)
+
+
+async def phone_number_keyboard():
+    builder = ReplyKeyboardBuilder()
+    builder.button(text=texts["phone_number_btn"],
+                   request_contact=True)
+    return builder
+
+
+async def registeration_kb(back_call):
+    btns = [
         [InlineKeyboardButton(text=texts["back_button"], callback_data=back_call)],
         [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")]
     ]

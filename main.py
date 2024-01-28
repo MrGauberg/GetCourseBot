@@ -19,7 +19,8 @@ async def main():
     from src.handlers import (
         start,
         course,
-        lesson
+        lesson,
+        registration
     )
     from src.services.application_client import application_client
 
@@ -27,6 +28,7 @@ async def main():
     course.register_handler(view_router)
     lesson.register_handler(view_router)
     assignment.register_handler(view_router, form_router)
+    registration.register_handler(form_router)
     dp.include_router(view_router)
     dp.include_router(form_router)
     try:

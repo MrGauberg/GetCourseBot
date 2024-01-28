@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from aiogram.types import (
@@ -5,14 +7,17 @@ from aiogram.types import (
 )
 from src.core.config import texts, bot
 from src.keyboards.main_menu_kb import (
-    buyed_course_details, course_details_kb, main_menu
+    buyed_course_details, course_details_kb, main_menu, registeration_kb
 )
 from src.keyboards.pagination_kb import generate_db_items_keyboard
-from src.misc.course_utils import get_item
+from src.misc.course_utils import get_course, get_course_id, get_item
 from src.misc.fabrics import create_page_hanler
+
 from src.services.application_client import application_client
 from src.core.settings import user_settings
 from aiogram.exceptions import TelegramBadRequest
+
+from src.states import UserDataState
 
 
 async def create_courses_handler(call: CallbackQuery,
@@ -54,7 +59,7 @@ async def get_course_handler(call: CallbackQuery,
                              state: FSMContext):
 
     data = await state.get_data()
-    course = await get_item(call, data['courses'])
+    course = await get_course(call, state)
 
     text = texts['course_details'].format(
         course['title'],
@@ -63,7 +68,9 @@ async def get_course_handler(call: CallbackQuery,
     )
     is_buyed = await application_client.check_payment(call.from_user.id,
                                                       course['id'])
-    await call.message.edit_text(
+    msg = call.message if isinstance(call, CallbackQuery) else call
+
+    await msg.edit_text(
         text=text,
         reply_markup=await course_details_kb(
             course['id'], data['courses_page'], is_buyed['exists']
@@ -87,7 +94,7 @@ async def student_courses_handler(call: CallbackQuery,
 
 async def student_course_handler(call: CallbackQuery,
                                  state: FSMContext):
-    course_id = int(call.data.split()[1])
+    course_id = await get_course_id(call, state)
     data = await state.update_data(course_id=course_id)
     course = await get_item(call, data['courses'])
 
@@ -96,6 +103,7 @@ async def student_course_handler(call: CallbackQuery,
         course['description'],
         course['price']
     )
+
     await call.message.edit_text(
         text=text,
         reply_markup=await buyed_course_details(
@@ -107,8 +115,32 @@ async def student_course_handler(call: CallbackQuery,
 
 
 # ==============================UKASSA=========================================
+
+async def start_registeration_proccess(
+        call: CallbackQuery,
+        state: FSMContext):
+
+    data = await state.get_data()
+
+    bot_msg = await call.message.edit_text(
+        text=texts['full_name'],
+        reply_markup=await registeration_kb(
+            f'courses {data["course_id"]}'
+        )
+    )
+    await state.update_data(bot_msg=bot_msg)
+    await state.set_state(UserDataState.FullName)
+
+
 async def process_ukassa(call: CallbackQuery, state: FSMContext):
+
+    user = await application_client.get_tg_user(call.from_user.id)
     course = await get_course(call, state)
+
+    if not user['full_name']:
+        await state.update_data(course_id=course['id'])
+        await start_registeration_proccess(call, state)
+        return
 
     bot_invoice = await bot.send_invoice(
         chat_id=call.from_user.id,

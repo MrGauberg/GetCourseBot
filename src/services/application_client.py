@@ -1,7 +1,6 @@
 import httpx
 from src.core.settings import application_settings
 from typing import Dict, Any
-from aiogram.types import Document
 
 
 class AplicationEndpoints:
@@ -36,6 +35,12 @@ class AplicationEndpoints:
 
     def _assignment_list_url(self, lesson_id):
         return f"{self.BASE_API_URL}/student-course/lessons/{lesson_id}/assignments"
+
+    def _get_tg_user(self, tg_id):
+        return f"{self.BASE_API_URL}/student/get_student/{tg_id}/"
+
+    def _update_tg_user(self, tg_id):
+        return f"{self.BASE_API_URL}/student/update-student/{tg_id}/"
 
 
 class ApplicationClient(AplicationEndpoints):
@@ -108,6 +113,16 @@ class ApplicationClient(AplicationEndpoints):
 
         return await self._make_request(
             "POST", self._create_assignment_response_url, data, files
+        )
+
+    async def get_tg_user(self, tg_id):
+        return await self._make_request(
+            "GET", self._get_tg_user(tg_id)
+        )
+
+    async def update_tg_user(self, tg_id, data):
+        return await self._make_request(
+            "patch", self._update_tg_user(tg_id), data
         )
 
 

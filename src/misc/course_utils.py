@@ -1,5 +1,6 @@
 from typing import Dict, List
 from aiogram.types import CallbackQuery
+from aiogram.fsm.context import FSMContext
 
 
 def is_id_in_item(item: Dict, id: int) -> bool:
@@ -31,3 +32,22 @@ def get_item_text(texts: Dict, lesson: Dict):
     text = f"{text}\n\n{video}\n\n{document}"
 
     return text
+
+
+async def get_course_id(call: CallbackQuery,
+                        state: FSMContext):
+    data = await state.get_data()
+    try:
+        course_id = int(call.data.split()[1])
+    except AttributeError:
+        course_id = data['course_id']
+    return course_id
+
+
+async def get_course(call: CallbackQuery,
+                     state: FSMContext):
+    data = await state.get_data()
+
+    course_id = await get_course_id(call, state)
+    course = receive_item(data['courses'], course_id)
+    return course

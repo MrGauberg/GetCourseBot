@@ -38,7 +38,7 @@ async def process_step(
         not_valid_message: str = None
 ):
     data = await state.get_data()
-    print(back_to)
+
     if validator and not validator(message.text.strip()):
 
         try:

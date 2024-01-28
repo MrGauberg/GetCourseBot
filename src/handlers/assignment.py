@@ -1,6 +1,8 @@
 
 import aiofiles
 from src.core.config import texts, bot
+from src.handlers.course import start_registeration_proccess
+from src.handlers.registration import full_name_proccess
 from src.services.application_client import application_client
 from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
@@ -165,7 +167,9 @@ async def get_files(file_path: str):
         return files
 
 BACK_ASSIGNMENT_CALLBACKS = {
-    "assignment_text_state": assignment_text_process
+    "assignment_text_state": assignment_text_process,
+    "user_full_name_state": start_registeration_proccess,
+    "user_email_state": full_name_proccess,
 }
 
 back_handler = create_back_button_handler(BACK_ASSIGNMENT_CALLBACKS)
