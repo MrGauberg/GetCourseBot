@@ -5,6 +5,7 @@ class AssignmentState(StatesGroup):
     Text = State()
     Document = State()
     Video = State()
+    Documents = State()
 
 
 class UserDataState(StatesGroup):

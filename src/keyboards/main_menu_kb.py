@@ -83,13 +83,26 @@ async def assignment_kb(lesson_id: int, assignment_id, exists):
     return InlineKeyboardMarkup(inline_keyboard=btns)
 
 
-async def assignment_respones_kb(back_call):
+async def assignment_respones_kb(back_call, back_button=True, skip_button=True, submit_button=False, finish_assignment=False):
     btns = [
-        [InlineKeyboardButton(text=texts["skip_btn"], callback_data=f"skip_btn")],
-        [InlineKeyboardButton(text=texts["back_button"], callback_data=back_call)],
-        [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")]
+        [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")],
     ]
+
+    if skip_button:
+        btns.insert(0, [InlineKeyboardButton(text=texts["skip_btn"], callback_data="skip_btn")])
+
+    if submit_button:
+        btns.append([InlineKeyboardButton(text=texts["pull_assignment"], callback_data=back_call)])
+
+    if finish_assignment:
+        btns.insert(0, [InlineKeyboardButton(text=texts["finish_assignment"], callback_data="finish_assignment")])
+
+    if back_button:
+        btns.append([InlineKeyboardButton(text=texts["back_button"], callback_data=back_call)])
+
     return InlineKeyboardMarkup(inline_keyboard=btns)
+
+
 
 
 async def phone_number_keyboard():

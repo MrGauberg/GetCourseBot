@@ -19,19 +19,27 @@ async def get_item(call: CallbackQuery, items: List):
     return item
 
 
-def get_item_text(texts: Dict, lesson: Dict):
-    video = texts['video'].format(lesson.get("video_url")) \
-        if lesson.get("video_url") else ""
-    document = texts['document'].format(lesson.get("document")) \
-        if lesson.get("document") else ""
 
+def get_item_text(texts: Dict, lesson: Dict) -> str:
     text = texts['lesson_details'].format(
         lesson['title'],
         lesson['content'],
     )
-    text = f"{text}\n\n{video}\n\n{document}"
+    video = lesson.get("video_url")
+    if video:
+        text = f"{text}\n\n{texts['video'].format(video)}"
+
+    files = lesson.get("files_from_storage", [])
+    if files:
+        materials = "\n".join(
+            [f"- <a href=\"{file['url']}\" download><b>{file['name']}</b></a>" for file in files]
+        )
+        text = f"{text}\n\n{texts['materials']}\n{materials}"
 
     return text
+
+
+
 
 
 async def get_course_id(call: CallbackQuery,

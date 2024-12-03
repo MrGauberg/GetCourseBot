@@ -1,16 +1,17 @@
 import httpx
 from src.core.settings import application_settings
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 
 
 class AplicationEndpoints:
     BASE_API_URL = application_settings.APPLICATION_URL
 
     def _course_list_url(self, instructor_id, page):
-        return f"{self.BASE_API_URL}/student-course/courses/{instructor_id}/?page={page}"
+        # return f"{self.BASE_API_URL}/student-course/courses/{instructor_id}/?page={page}"
+        return f"{self.BASE_API_URL}/courses/courses/{instructor_id}/?page={page}&page_size=5"
 
     def _student_courses_url(self, tg_user_id, page):
-        return f"{self.BASE_API_URL}/student/student-courses/{tg_user_id}/?page={page}"
+        return f"{self.BASE_API_URL}/student/student-courses/{tg_user_id}/?page={page}&page_size=5"
 
     @property
     def _create_student_url(self):
@@ -31,10 +32,12 @@ class AplicationEndpoints:
         return f"{self.BASE_API_URL}/student/check-assignment-response/{student_id}/{assignment_id}/"
 
     def _lesson_list_url(self, course_id, page):
-        return f"{self.BASE_API_URL}/student-course/{course_id}/lessons/?page={page}"
+        # return f"{self.BASE_API_URL}/student-course/{course_id}/lessons/?page={page}"
+        return f"{self.BASE_API_URL}/courses/{course_id}/lessons/?page={page}&page_size=5"
 
     def _assignment_list_url(self, lesson_id):
-        return f"{self.BASE_API_URL}/student-course/lessons/{lesson_id}/assignments"
+        # return f"{self.BASE_API_URL}/student-course/lessons/{lesson_id}/assignments"
+        return f"{self.BASE_API_URL}/courses/lessons/{lesson_id}/assignments"
 
     def _get_tg_user(self, tg_id):
         return f"{self.BASE_API_URL}/student/get_student/{tg_id}/"
@@ -46,34 +49,88 @@ class AplicationEndpoints:
 class ApplicationClient(AplicationEndpoints):
 
     def __init__(self) -> None:
-        self.client = httpx.AsyncClient()
+        self.client = httpx.AsyncClient(follow_redirects=True)
 
     async def close(self) -> None:
         if not self.client.is_closed:
             await self.client.aclose()
+
+    async def authenticate(self, email: str, password: str) -> None:
+        """
+        Авторизация и получение начальных токенов.
+        """
+        url = f"{self.BASE_API_URL}/auth/token/"
+        try:
+            response = await self.client.post(
+                url,
+                json={"email": email, "password": password}
+            )
+            response.raise_for_status()
+            tokens = response.json()
+            self.access_token = tokens.get("access")
+            self.refresh_token = tokens.get("refresh")
+            print("Authentication successful. Tokens received.")
+        except httpx.HTTPError as e:
+            print(f"Authentication failed: {e}")
+            raise
+        
+    async def refresh_access_token(self) -> None:
+        """
+        Обновляет access_token с использованием refresh_token.
+        """
+        if not self.refresh_token:
+            raise ValueError("Refresh token is missing. Cannot refresh access token.")
+        
+        url = f"{self.BASE_API_URL}/auth/token/refresh/" 
+        try:
+            response = await self.client.post(
+                url,
+                json={"refresh_token": self.refresh_token},
+                headers={"Authorization": f"Bearer {self.refresh_token}"}
+            )
+            response.raise_for_status()
+            tokens = response.json()
+            self.access_token = tokens.get("access_token")
+            self.refresh_token = tokens.get("refresh_token")
+            print("Access token refreshed successfully.")
+        except httpx.HTTPError as e:
+            print(f"Failed to refresh token: {e}")
+            raise
 
     async def _make_request(
         self,
         method: str,
         url: str,
         data: Dict[str, Any] = None,
-        files: Dict[str, Any] = None
+        files: List[Tuple[str, Tuple[str, bytes, str]]] = None,
+        headers: Dict[str, str] = None
     ) -> Any:
+        print(f"Making {method} request to {url}")
         try:
+            headers = headers or {}
+            if self.access_token:
+                headers["Authorization"] = f"Bearer {self.access_token}"
+
             if files:
-                # Подготовка данных и файлов для мультипарт-формы
-                multipart_data = {}
-                for key, value in data.items():
-                    multipart_data[key] = (None, str(value))
-                for file_key, file_value in files.items():
-                    multipart_data[file_key] = file_value
-                response = await self.client.request(method, url, files=multipart_data)
+                response = await self.client.request(method, url, data=data, files=files, headers=headers)
             else:
-                # Отправка данных в формате JSON, если файлов нет
-                response = await self.client.request(method, url, json=data)
+                response = await self.client.request(method, url, json=data, headers=headers)
+
+            response.raise_for_status()
+            if response.status_code == 204 or not response.content.strip():
+                return None
             return response.json()
-        except httpx.HTTPError as error:
-            print(error)
+
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:
+                print("Access token expired. Attempting to refresh token.")
+                await self.refresh_access_token()
+                headers["Authorization"] = f"Bearer {self.access_token}"
+                response = await self.client.request(method, url, json=data, headers=headers)
+                response.raise_for_status()
+                return response.json()
+            else:
+                print(f"HTTP error: {e}")
 
     async def create_students(self, data: Dict) -> Any:
         return await self._make_request("POST", self._create_student_url, data)

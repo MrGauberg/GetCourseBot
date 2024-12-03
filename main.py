@@ -31,6 +31,18 @@ async def main():
     registration.register_handler(form_router)
     dp.include_router(view_router)
     dp.include_router(form_router)
+
+    # Авторизация для получения токенов
+    email = "admin@test.com"
+    password = "CoursePassword18645"
+    try:
+        print("Authenticating...")
+        await application_client.authenticate(email, password)
+        print("Authentication successful!")
+    except Exception as e:
+        print(f"Authentication failed: {e}")
+        return  
+
     try:
         await on_startup(bot)
         await dp.start_polling(bot)

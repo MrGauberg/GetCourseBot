@@ -17,6 +17,7 @@ from src.misc.validator import is_valid_url, is_all_fields_blank
 from src.states import AssignmentState
 import os
 from asgiref.sync import sync_to_async
+from aiogram.types import ContentType
 
 
 async def assignment_handler(call: CallbackQuery, state: FSMContext):
@@ -92,79 +93,123 @@ async def assignment_video_process(message: Message, state: FSMContext):
             await state.set_state(AssignmentState.Video)
             return
 
-        data['assignment_model']['video'] = link
+        data['assignment_model']['video_url'] = link
         await message.delete()
     except AttributeError:
-        data['assignment_model']['video'] = None
+        data['assignment_model']['video_url'] = None
         pass
+    data['assignment_model']['bot_msg_text'] = texts['DocumentState']
     await state.update_data(assignment_model=data['assignment_model'])
     await bot.edit_message_text(
         chat_id=message.from_user.id,
         message_id=data['bot_message_id'],
         text=texts['DocumentState'],
         reply_markup=await assignment_respones_kb(
-            'back_to_assignment_text_state'
+            'back_to_assignment_text_state',
+            skip_button=False,
+            finish_assignment=True
         )
     )
-    await state.set_state(AssignmentState.Document)
+    await state.set_state(AssignmentState.Documents)
 
+
+from aiogram.types import ContentType
 
 async def assignment_doc_process(message: Message, state: FSMContext):
     data = await state.get_data()
-    files = None
-    try:
+    files = data.get('files', [])
+    text = data['assignment_model'].get('bot_msg_text')
+    content_type = message.content_type if isinstance(message, Message) else None
+    if content_type == ContentType.DOCUMENT:
+        # Обработка полученного документа
         document = message.document
         file_id = document.file_id
+        file_name = document.file_name
 
-        # Получение file_path от Telegram
+        # Получение пути к файлу от Telegram
         file = await bot.get_file(file_id)
         file_path = file.file_path
         file_name = file_path.split('/')[-1]
+
         # Скачивание файла
         file_path_to_save = f"documents/temp_{file_id}_{file_name}"
         await bot.download_file(file_path, destination=file_path_to_save)
 
-        # Подготовка файлов для отправки
-        files = await get_files(file_path_to_save)
-        await sync_to_async(os.remove)(file_path_to_save)
+        # Сохранение пути к файлу
+        files.append(file_path_to_save)
+        if len(files) == 1:
+            text += "\n\n" + texts["file_received"] + "\n\n"
+
+        text += "\n" + f"{len(files)}. {file_name}"
+        data['assignment_model']['bot_msg_text'] = text
+
+        await state.update_data(files=files, assignment_model=data['assignment_model'])
         await message.delete()
-    except AttributeError:
-        array = [
-            data['assignment_model']['text'],
-            data['assignment_model']['video'],
-            ]
-        if is_all_fields_blank(array):
-            await bot.edit_message_text(
-                chat_id=message.from_user.id,
-                message_id=data['bot_message_id'],
-                text=texts['all_element_blank'],
-                reply_markup=await lesson_details_kb(
-                    data['lessons_page'], data['assignments']),
-                disable_web_page_preview=True
+        await bot.edit_message_text(
+            chat_id=message.from_user.id,
+            message_id=data['bot_message_id'],
+            text=text,
+            reply_markup=await assignment_respones_kb(
+                'back_to_assignment_text_state',
+            finish_assignment=True,
+            skip_button=False
             )
-            return
+        )
+
+
+async def finish_assignment_handler(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    files = data.get('files', [])
+    # Проверка состояния
+    array = [
+        data['assignment_model'].get('text'),
+        data['assignment_model'].get('video'),
+        files
+    ]
+    if is_all_fields_blank(array):
+        await bot.edit_message_text(
+            chat_id=call.from_user.id,
+            message_id=data['bot_message_id'],
+            text=texts['all_element_blank'],
+            reply_markup=await lesson_details_kb(
+                data['lessons_page'], data['assignments']),
+            disable_web_page_preview=True
+        )
+        await state.clear()
+        return
+
+    # Подготовка файлов для отправки
+    file_tuples = []
+    for file_path in files:
+        async with aiofiles.open(file_path, 'rb') as file:
+            file_content = await file.read()
+            file_name = os.path.basename(file_path)
+            file_tuples.append(('files', (file_name, file_content, 'application/octet-stream')))
+        await sync_to_async(os.remove)(file_path)
 
     await application_client.create_assignment_response(
-        data['assignment_model'], files=files
-        )
-    await state.set_state(state=None)
-    await bot.edit_message_text(
-        chat_id=message.from_user.id,
-        message_id=data['bot_message_id'],
-        text=texts['assignment_created_success'],
-        reply_markup=await lesson_details_kb(
-            data['lessons_page'], data['assignments']),
-        disable_web_page_preview=True
+        data['assignment_model'], files=file_tuples
     )
-
+    await state.clear()
+    user_id = call.from_user.id
+    await bot.edit_message_text(
+            chat_id=user_id,
+            message_id=data['bot_message_id'],
+            text=texts['assignment_created_success'],
+            reply_markup=await assignment_respones_kb(
+                'back_to_assignment_text_state',
+            back_button=False,
+            skip_button=False
+            )
+        )
 
 async def get_files(file_path: str):
-
     async with aiofiles.open(file_path, 'rb') as file:
         file_content = await file.read()
-        files = {'document': (file_path, file_content,
-                              'application/octet-stream')}
+        file_name = os.path.basename(file_path)
+        files = [('files', (file_name, file_content, 'application/octet-stream'))]
         return files
+
 
 BACK_ASSIGNMENT_CALLBACKS = {
     "assignment_text_state": assignment_text_process,
@@ -212,3 +257,16 @@ def register_handler(view_router: Router, form_router: Router):
         assignment_doc_process,
         AssignmentState.Document
     )
+    form_router.message.register(
+        assignment_doc_process,
+        AssignmentState.Documents
+    )
+    form_router.callback_query.register(
+        assignment_doc_process,
+        AssignmentState.Documents
+    )
+    view_router.callback_query.register(
+        finish_assignment_handler,
+        F.data == "finish_assignment"
+    )
+

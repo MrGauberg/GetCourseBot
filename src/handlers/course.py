@@ -26,7 +26,6 @@ async def create_courses_handler(call: CallbackQuery,
                                  unit_name: str,
                                  data: dict,
                                  page: int):
-
     await state.update_data(courses=data['results'],
                             courses_page=page)
     course_list_kb = await generate_db_items_keyboard(
@@ -141,7 +140,7 @@ async def process_ukassa(call: CallbackQuery, state: FSMContext):
         await state.update_data(course_id=course['id'])
         await start_registeration_proccess(call, state)
         return
-
+    amount = int(float(course['price'])) * 100
     bot_invoice = await bot.send_invoice(
         chat_id=call.from_user.id,
         title=texts['invoice_title'].format(course['title']),
@@ -150,7 +149,7 @@ async def process_ukassa(call: CallbackQuery, state: FSMContext):
         provider_token=user_settings.UKASSA_TOKEN,
         currency='RUB',
         start_parameter=f'bot_user_{user_settings.USER_ID}',
-        prices=[LabeledPrice(label="Руб", amount=int(float(course['price'])) * 100)]
+        prices=[LabeledPrice(label="Руб", amount=amount)]
     )
 
     await state.update_data(bot_invoice=bot_invoice,
