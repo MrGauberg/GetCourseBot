@@ -30,10 +30,12 @@ def get_item_text(texts: Dict, lesson: Dict) -> str:
         text = f"{text}\n\n{texts['video'].format(video)}"
 
     files = lesson.get("files_from_storage", [])
+    print(video)
     if files:
         materials = "\n".join(
-            [f"- <a href=\"{file['url']}\" download><b>{file['name']}</b></a>" for file in files]
+            [f"- <a href=\"{file['url']}\" ><b>{file['name']}</b></a>" for file in files]
         )
+        print(materials)
         text = f"{text}\n\n{texts['materials']}\n{materials}"
 
     return text
