@@ -13,5 +13,5 @@ services:
       - app_net
 
 networks:
-  app_net:
-    external: true  # Сеть сервиса
+  getcourse_app_net:
+    external: true  # Сеть сервиса getcourse
