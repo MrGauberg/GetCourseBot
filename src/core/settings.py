@@ -25,6 +25,8 @@ class UserSettings(BaseSettings):
     USER_TG_ID: str
     USER_TG_NAME: str
     USER_ID: str
+    YOOKASSA_SHOP_ID: str
+    YOOKASSA_SECRET_KEY: str
 
 
 user_settings = UserSettings()

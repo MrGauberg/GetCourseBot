@@ -17,6 +17,7 @@ redis = "^5.0.1"
 validators = "^0.22.0"
 asgiref = "^3.7.2"
 watchgod = "^0.8.2"
+yookassa = "^3.4.2"
 
 
 [build-system]
