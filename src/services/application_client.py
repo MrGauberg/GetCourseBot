@@ -90,8 +90,8 @@ class ApplicationClient(AplicationEndpoints):
             )
             response.raise_for_status()
             tokens = response.json()
-            self.access_token = tokens.get("access_token")
-            self.refresh_token = tokens.get("refresh_token")
+            self.access_token = tokens.get("access")
+            self.refresh_token = tokens.get("refresh")
             print("Access token refreshed successfully.")
         except httpx.HTTPError as e:
             print(f"Failed to refresh token: {e}")
