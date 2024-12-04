@@ -10,8 +10,7 @@ services:
     ports:
       - "8000:8000"
     networks:
-      - app_net
-
+      - getcourse_app_net
 networks:
   getcourse_app_net:
     external: true  # Сеть сервиса getcourse
