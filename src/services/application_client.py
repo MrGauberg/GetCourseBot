@@ -125,6 +125,7 @@ class ApplicationClient(AplicationEndpoints):
                 print("Access token expired. Attempting to refresh token.")
                 await self.refresh_access_token()
                 headers["Authorization"] = f"Bearer {self.access_token}"
+                print(f"Data sent: {data}")
                 response = await self.client.request(method, url, json=data, headers=headers)
                 response.raise_for_status()
                 return response.json()
