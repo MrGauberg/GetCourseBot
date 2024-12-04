@@ -207,7 +207,7 @@ async def process_ukassa(call: CallbackQuery, state: FSMContext):
     # Настройка конфигурации YooKassa
     Configuration.account_id = user_settings.YOOKASSA_SHOP_ID
     Configuration.secret_key = user_settings.YOOKASSA_SECRET_KEY
-    user_tg_name = user_settings.USER_TG_NAME
+    bot_name = user_settings.BOT_NAME
 
     # Создание платежа
     payment = Payment.create({
@@ -217,7 +217,7 @@ async def process_ukassa(call: CallbackQuery, state: FSMContext):
         },
         "confirmation": {
             "type": "redirect",
-            "return_url": f"https://t.me/{user_tg_name}"  # Замените на ваш URL
+            "return_url": f"https://t.me/{bot_name}" 
         },
         "capture": True,
         "description": f"Оплата курса {course['title']}",

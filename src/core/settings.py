@@ -27,6 +27,7 @@ class UserSettings(BaseSettings):
     USER_ID: str
     YOOKASSA_SHOP_ID: str
     YOOKASSA_SECRET_KEY: str
+    BOT_NAME: str
 
 
 user_settings = UserSettings()
