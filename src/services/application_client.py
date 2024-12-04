@@ -85,7 +85,7 @@ class ApplicationClient(AplicationEndpoints):
         try:
             response = await self.client.post(
                 url,
-                json={"refresh_token": self.refresh_token},
+                json={"refresh": self.refresh_token},
                 headers={"Authorization": f"Bearer {self.refresh_token}"}
             )
             response.raise_for_status()
