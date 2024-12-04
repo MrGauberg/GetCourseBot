@@ -151,7 +151,7 @@ async def process_ukassa(call: CallbackQuery, state: FSMContext):
         start_parameter=f'bot_user_{user_settings.USER_ID}',
         prices=[LabeledPrice(label="Руб", amount=amount)]
     )
-
+    
     await state.update_data(bot_invoice=bot_invoice,
                             current_call_id=call.message.message_id)
 

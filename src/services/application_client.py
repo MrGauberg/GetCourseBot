@@ -95,7 +95,6 @@ class ApplicationClient(AplicationEndpoints):
             print("Access token refreshed successfully.")
         except httpx.HTTPError as e:
             print(f"Failed to refresh token: {e}")
-            raise
 
     async def _make_request(
         self,
