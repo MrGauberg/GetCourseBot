@@ -129,7 +129,7 @@ async def assignment_doc_process(message: Message, state: FSMContext):
         # Получение пути к файлу от Telegram
         file = await bot.get_file(file_id)
         file_path = file.file_path
-        file_name = file_path.split('/')[-1]
+        # file_name = file_path.split('/')[-1]
 
         # Скачивание файла
         if not os.path.exists("documents"):
