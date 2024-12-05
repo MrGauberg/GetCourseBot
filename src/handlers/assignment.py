@@ -132,6 +132,8 @@ async def assignment_doc_process(message: Message, state: FSMContext):
         file_name = file_path.split('/')[-1]
 
         # Скачивание файла
+        if not os.path.exists("documents"):
+            os.makedirs("documents")
         file_path_to_save = f"documents/temp_{file_id}_{file_name}"
         await bot.download_file(file_path, destination=file_path_to_save)
 
