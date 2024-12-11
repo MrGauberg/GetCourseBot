@@ -1,4 +1,5 @@
 import asyncio
+import os
 from aiogram import Bot
 from pytz import timezone
 from src.handlers import assignment
@@ -33,11 +34,9 @@ async def main():
     dp.include_router(form_router)
 
     # Авторизация для получения токенов
-    email = "admin@test.com"
-    password = "CoursePassword18645"
     try:
         print("Authenticating...")
-        await application_client.authenticate(email, password)
+        await application_client.authenticate()
         print("Authentication successful!")
     except Exception as e:
         print(f"Authentication failed: {e}")

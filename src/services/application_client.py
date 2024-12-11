@@ -1,7 +1,7 @@
 import httpx
 from src.core.settings import application_settings
 from typing import Dict, Any, List, Tuple
-
+from src.core.config import user_settings
 
 class AplicationEndpoints:
     BASE_API_URL = application_settings.APPLICATION_URL
@@ -55,7 +55,11 @@ class ApplicationClient(AplicationEndpoints):
         if not self.client.is_closed:
             await self.client.aclose()
 
-    async def authenticate(self, email: str, password: str) -> None:
+    async def authenticate(self) -> None:
+
+        email = user_settings.EMAIL
+        password = user_settings.PASSWORD
+
         """
         Авторизация и получение начальных токенов.
         """
@@ -73,28 +77,44 @@ class ApplicationClient(AplicationEndpoints):
         except httpx.HTTPError as e:
             print(f"Authentication failed: {e}")
             raise
+
+    async def ensure_authenticated(self) -> None:
+        """
+        Гарантирует, что токены присутствуют и действительны.
+        """
+        if not self.access_token or not self.refresh_token:
+            print("Tokens are missing. Authenticating...")
+            await self.authenticate()
         
     async def refresh_access_token(self) -> None:
         """
         Обновляет access_token с использованием refresh_token.
+        Если refresh_token недействителен, выполняет повторную авторизацию.
         """
         if not self.refresh_token:
-            raise ValueError("Refresh token is missing. Cannot refresh access token.")
-        
-        url = f"{self.BASE_API_URL}/auth/token/refresh/" 
+            print("Refresh token is missing. Re-authenticating.")
+            await self.authenticate()
+            return
+
+        url = f"{self.BASE_API_URL}/auth/token/refresh/"
         try:
             response = await self.client.post(
                 url,
                 json={"refresh": self.refresh_token},
-                headers={"Authorization": f"Bearer {self.refresh_token}"}
             )
             response.raise_for_status()
             tokens = response.json()
             self.access_token = tokens.get("access")
             self.refresh_token = tokens.get("refresh")
             print("Access token refreshed successfully.")
-        except httpx.HTTPError as e:
-            print(f"Failed to refresh token: {e}")
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401:  # Если refresh_token просрочился
+                print("Refresh token expired. Re-authenticating.")
+                await self.authenticate()  # Полная авторизация
+            else:
+                print(f"Failed to refresh token: {e}")
+                raise
+
 
     async def _make_request(
         self,
@@ -104,7 +124,6 @@ class ApplicationClient(AplicationEndpoints):
         files: List[Tuple[str, Tuple[str, bytes, str]]] = None,
         headers: Dict[str, str] = None
     ) -> Any:
-        print(f"Making {method} request to {url}")
         try:
             headers = headers or {}
             if self.access_token:
@@ -116,21 +135,30 @@ class ApplicationClient(AplicationEndpoints):
                 response = await self.client.request(method, url, json=data, headers=headers)
 
             response.raise_for_status()
-            if response.status_code == 204 or not response.content.strip():
-                return None
             return response.json()
 
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 401:
+            if e.response.status_code == 401:  # Ошибка авторизации
                 print("Access token expired. Attempting to refresh token.")
-                await self.refresh_access_token()
-                headers["Authorization"] = f"Bearer {self.access_token}"
-                print(f"Data sent: {data}")
-                response = await self.client.request(method, url, json=data, headers=headers)
-                response.raise_for_status()
-                return response.json()
+                try:
+                    await self.refresh_access_token()  # Попробовать обновить токен
+                    headers["Authorization"] = f"Bearer {self.access_token}"
+                    response = await self.client.request(method, url, json=data, headers=headers)
+                    response.raise_for_status()
+                    return response.json()
+                except httpx.HTTPStatusError as refresh_error:
+                    if refresh_error.response.status_code == 401:  # Refresh тоже недействителен
+                        print("Refresh token expired. Re-authenticating.")
+                        await self.authenticate()  # Полная авторизация
+                        headers["Authorization"] = f"Bearer {self.access_token}"
+                        response = await self.client.request(method, url, json=data, headers=headers)
+                        response.raise_for_status()
+                        return response.json()
+                    else:
+                        raise refresh_error
             else:
-                print(f"HTTP error: {e}")
+                raise
+
 
     async def create_students(self, data: Dict) -> Any:
         return await self._make_request("POST", self._create_student_url, data)
