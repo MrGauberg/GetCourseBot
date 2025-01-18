@@ -76,6 +76,7 @@ class ApplicationClient(AplicationEndpoints):
             print("Authentication successful. Tokens received.")
         except httpx.HTTPError as e:
             print(f"Authentication failed: {e}")
+            print(application_settings.APPLICATION_URL)
             raise
 
     async def ensure_authenticated(self) -> None:

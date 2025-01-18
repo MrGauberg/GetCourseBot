@@ -18,6 +18,7 @@ from src.core.settings import user_settings
 from aiogram.exceptions import TelegramBadRequest
 
 from src.states import UserDataState
+from aiogram.types import InlineKeyboardMarkup, WebAppInfo, InlineKeyboardButton
 
 
 
@@ -132,121 +133,22 @@ async def start_registeration_proccess(
     await state.set_state(UserDataState.FullName)
 
 
-#  TODO Payments в России не работает на текущий моментт. Возможно в будущем пригодится.
-
-# async def process_ukassa(call: CallbackQuery, state: FSMContext):
-
-#     user = await application_client.get_tg_user(call.from_user.id)
-#     course = await get_course(call, state)
-
-#     if not user['full_name']:
-#         await state.update_data(course_id=course['id'])
-#         await start_registeration_proccess(call, state)
-#         return
-#     amount = int(float(course['price'])) * 100
-#     bot_invoice = await bot.send_invoice(
-#         chat_id=call.from_user.id,
-#         title=texts['invoice_title'].format(course['title']),
-#         description=texts['invoice_description'],
-#         payload=f'ukassa_pay {course["id"]}',
-#         provider_token=user_settings.UKASSA_TOKEN,
-#         currency='RUB',
-#         start_parameter=f'bot_user_{user_settings.USER_ID}',
-#         prices=[LabeledPrice(label="Руб", amount=amount)]
-#     )
-    
-#     await state.update_data(bot_invoice=bot_invoice,
-#                             current_call_id=call.message.message_id)
-
-
-# async def process_pre_checkout(pre_checkout_query: PreCheckoutQuery):
-
-#     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
-
-
-# async def process_success_pay(message: Message, state: FSMContext):
-
-#     success_pay = message.successful_payment.invoice_payload
-#     data = await state.get_data()
-
-#     if not success_pay.startswith('ukassa_pay'):
-#         return
-#     course_id = int(success_pay.split()[1])
-#     api_data = {'student': message.from_user.id, 'course': course_id}
-#     await application_client.create_student_paymant(api_data)
-
-#     try:
-#         await data['bot_invoice'].delete()
-#     except (TelegramBadRequest, KeyError):
-#         pass
-
-#     await bot.edit_message_text(
-#         chat_id=message.from_user.id,
-#         message_id=data['current_call_id'],
-#         text=texts['payments_succesful'],
-#         reply_markup=await main_menu()
-#     )
-#     await message.delete()
-
-
-
-from yookassa import Configuration, Payment
-from aiogram.types import InlineKeyboardButton
-from aiogram.types import InlineKeyboardMarkup
-
-
 async def process_ukassa(call: CallbackQuery, state: FSMContext):
     user = await application_client.get_tg_user(call.from_user.id)
     course = await get_course(call, state)
 
-    if not user['full_name']:
-        await state.update_data(course_id=course['id'])
-        await start_registeration_proccess(call, state)
-        return
-
-    # Настройка конфигурации YooKassa
-    Configuration.account_id = user_settings.YOOKASSA_SHOP_ID
-    Configuration.secret_key = user_settings.YOOKASSA_SECRET_KEY
-    bot_name = user_settings.BOT_NAME
-
-    # Создание платежа
-    payment = Payment.create({
-        "amount": {
-            "value": f"{course['price']}",
-            "currency": "RUB"
-        },
-        "confirmation": {
-            "type": "redirect",
-            "return_url": f"https://t.me/{bot_name}" 
-        },
-        "capture": True,
-        "description": f"Оплата курса {course['title']}",
-        "metadata": {
-            "user_tg_id": call.from_user.id,
-            "course_title": course['title'],
-            "admin_id": user_settings.USER_ID
-        }
-    })
-
-    confirmation_url = payment.confirmation.confirmation_url
-
-    # Сохранение платежа в базе данных через application_client
-    await application_client.create_student_paymant({
-        "payment_id": payment.id,
-        "student": call.from_user.id,
-        "course": course['id'],
-        "status": payment.status
-
-    })
 
     # Отправка сообщения пользователю с кнопкой "Оплатить"
+    web_app_url = "https://kl2jbr.ru/api/v1/courses/lead-create" 
     text = f"{texts['invoice_title'].format(course['title'])}\n{texts['invoice_description']}\n{texts['price'].format(course['price'])}"
-    button = InlineKeyboardButton(text=texts['pay'], url=confirmation_url)
+    # Кнопка с Web App
+    button = InlineKeyboardButton(
+        text=texts['pay'],
+        web_app=WebAppInfo(url=web_app_url)
+    )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button]])
     await call.message.edit_text(text=text, reply_markup=keyboard)
 
-
-# ==============================UKASSA=========================================
 
 COURSE_VIEW_PAGINATION_GROUP = {
     'page_view_courses_all': all_courses_handler,
@@ -283,10 +185,4 @@ def register_handler(view_router: Router):
         process_ukassa,
         F.data.startswith('ukassa_pay_btn')
     )
-    # view_router.pre_checkout_query.register(
-    #     process_pre_checkout
-    # )
-    # view_router.message.register(
-    #     process_success_pay,
-    #     F.content_type == ContentType.SUCCESSFUL_PAYMENT
-    # )
+  

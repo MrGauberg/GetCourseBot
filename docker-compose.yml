@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   bot:
@@ -7,6 +6,10 @@ services:
     restart: always
     env_file:
       - .env
+    image: my-telegram-bot-image
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - USER_ID=${USER_ID}
     ports:
       - "8000:8000"
     networks:
