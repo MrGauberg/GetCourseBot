@@ -133,21 +133,48 @@ async def start_registeration_proccess(
     await state.set_state(UserDataState.FullName)
 
 
+from http.cookies import SimpleCookie
+
+def generate_cookie_string(access_token: str) -> str:
+    """
+    Формирует строку куков с токеном доступа.
+    """
+    cookie = SimpleCookie()
+    cookie["access_token"] = access_token
+    cookie["access_token"]["path"] = "/"
+    cookie["access_token"]["httponly"] = True
+    cookie["access_token"]["secure"] = True  # Если используется HTTPS
+    return cookie.output(header="", sep="").strip()
+
+
 async def process_ukassa(call: CallbackQuery, state: FSMContext):
+    """
+    Обработка запроса оплаты с использованием Web App.
+    """
     user = await application_client.get_tg_user(call.from_user.id)
     course = await get_course(call, state)
 
+    # Обновляем токен, если он истёк
+    await application_client.ensure_authenticated()
 
-    # Отправка сообщения пользователю с кнопкой "Оплатить"
-    web_app_url = "https://kl2jbr.ru/lead-create" 
+    # Генерируем куки с токеном
+    cookie_string = generate_cookie_string(application_client.access_token)
+
+    # Формируем URL с передачей куков
+    web_app_url = f"https://kl2jbr.ru/lead-create"
+    headers = f"Set-Cookie: {cookie_string}"
+
+    # Создаём кнопку с Web App
     text = f"{texts['invoice_title'].format(course['title'])}\n{texts['invoice_description']}\n{texts['price'].format(course['price'])}"
-    # Кнопка с Web App
     button = InlineKeyboardButton(
         text=texts['pay'],
-        web_app=WebAppInfo(url=web_app_url)
+        web_app=WebAppInfo(url=web_app_url)  # Web App URL
     )
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[button]])
+
+    # Отправляем сообщение с кнопкой
     await call.message.edit_text(text=text, reply_markup=keyboard)
+
 
 
 COURSE_VIEW_PAGINATION_GROUP = {
