@@ -34,7 +34,7 @@ async def course_details_kb(
         web_app_url = f"https://kl2jbr.ru/lead-create?bot_id={bot_id}&user_id={user_id}&course_id={course_id}"
         buttons.append([
             InlineKeyboardButton(
-                text=text=texts["course_request"],
+                text=texts["course_request"],
                 web_app=WebAppInfo(url=web_app_url)  # Указываем URL для WebApp
             )
         ])
