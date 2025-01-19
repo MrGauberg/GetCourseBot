@@ -140,7 +140,7 @@ async def process_ukassa(call: CallbackQuery, state: FSMContext):
 
 
     # Отправка сообщения пользователю с кнопкой "Оплатить"
-    web_app_url = f"https://kl2jbr.ru/lead-create?bot_id={call.bot.id}&user_id={call.from_user.id}" 
+    web_app_url = f"https://kl2jbr.ru/lead-create?bot_id={call.bot.id}&user_id={call.from_user.id}&user_name={user['username']}&course_id={course['id']}" 
     text = f"{texts['invoice_title'].format(course['title'])}\n{texts['invoice_description']}\n{texts['price'].format(course['price'])}"
     # Кнопка с Web App
     button = InlineKeyboardButton(
