@@ -74,7 +74,7 @@ async def get_course_handler(call: CallbackQuery,
     await msg.edit_text(
         text=text,
         reply_markup=await course_details_kb(
-            course_id=course['id'], page=data['courses_page'], is_buyed=is_buyed['exists'], bot_id=call.bot.id, user_id=call.from_user.id
+            course_id=course['id'], page=data['courses_page'], is_buyed=is_buyed['exists'], call=call
         )
     )
 # ==============================ALL COURSES====================================
