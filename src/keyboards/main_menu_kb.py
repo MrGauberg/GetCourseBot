@@ -2,7 +2,7 @@ from typing import List
 
 from src.core.config import texts, TG_SUPPORT
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, CallbackQuery
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 
 
@@ -24,14 +24,15 @@ async def course_details_kb(
     course_id: int, 
     page: int, 
     is_buyed: bool, 
-    call: CallbackQuery,
+    bot_id: int, 
+    user_name: str,
 ) -> InlineKeyboardMarkup:
     buttons = []
 
     # Добавить кнопку "Купить", только если курс не куплен
     if not is_buyed:
-        print(call.from_user)
-        web_app_url = f"https://kl2jbr.ru/lead-create?bot_id={call.from_user.id}&user_name={call.from_user.username}&course_id={course_id}"
+        web_app_url = f"https://kl2jbr.ru/lead-create?bot_id={bot_id}&user_name={user_name}&course_id={course_id}"
+        print(web_app_url)
         buttons.append([
             InlineKeyboardButton(
                 text=texts["course_request"],
