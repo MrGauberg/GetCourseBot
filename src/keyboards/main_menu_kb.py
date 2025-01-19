@@ -1,9 +1,9 @@
 from typing import List
-from aiogram.types import (InlineKeyboardMarkup,
-                           InlineKeyboardButton)
 
 from src.core.config import texts, TG_SUPPORT
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+
 
 
 async def main_menu():
@@ -19,24 +19,36 @@ async def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
+
 async def course_details_kb(
-        course_id: int, page: int, is_buyed: bool
+    course_id: int, 
+    page: int, 
+    is_buyed: bool, 
+    bot_id: int, 
+    user_id: int
 ) -> InlineKeyboardMarkup:
     buttons = []
 
     # Добавить кнопку "Купить", только если курс не куплен
     if not is_buyed:
-        buttons.append([InlineKeyboardButton(
-            text=texts["buy_course"],
-            callback_data=f"ukassa_pay_btn {course_id}"
-        )])
+        web_app_url = f"https://kl2jbr.ru/lead-create?bot_id={bot_id}&user_id={user_id}&course_id={course_id}"
+        buttons.append([
+            InlineKeyboardButton(
+                text=text=texts["course_request"],
+                web_app=WebAppInfo(url=web_app_url)  # Указываем URL для WebApp
+            )
+        ])
+
     # Кнопка "Назад" всегда присутствует
-    buttons.append([InlineKeyboardButton(
-        text=texts["back_button"],
-        callback_data=f"page_view_courses_all {page}"
-    )])
+    buttons.append([
+        InlineKeyboardButton(
+            text="Назад",
+            callback_data=f"page_view_courses_all {page}"
+        )
+    ])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
 
 
 async def buyed_course_details(course_id: int, page: int):

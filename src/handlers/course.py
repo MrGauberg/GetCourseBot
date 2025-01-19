@@ -74,7 +74,7 @@ async def get_course_handler(call: CallbackQuery,
     await msg.edit_text(
         text=text,
         reply_markup=await course_details_kb(
-            course['id'], data['courses_page'], is_buyed['exists']
+            course_id=course['id'], page=data['courses_page'], is_buyed=is_buyed['exists'], bot_id=call.bot.id, user_id=call.from_user.id
         )
     )
 # ==============================ALL COURSES====================================
@@ -133,25 +133,6 @@ async def start_registeration_proccess(
     await state.set_state(UserDataState.FullName)
 
 
-
-async def process_ukassa(call: CallbackQuery, state: FSMContext):
-    user = await application_client.get_tg_user(call.from_user.id)
-    course = await get_course(call, state)
-
-
-    # Отправка сообщения пользователю с кнопкой "Оплатить"
-    tg_username = call.from_user.username or "Не указан"  # Если username отсутствует
-    web_app_url = f"https://kl2jbr.ru/lead-create?bot_id={call.bot.id}&user_id={call.from_user.id}&user_name={tg_username}&course_id={course['id']}"
-    text = f"{texts['invoice_title'].format(course['title'])}\n{texts['invoice_description']}\n{texts['price'].format(course['price'])}"
-    # Кнопка с Web App
-    button = InlineKeyboardButton(
-        text=texts['pay'],
-        web_app=WebAppInfo(url=web_app_url)
-    )
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[[button]])
-    await call.message.edit_text(text=text, reply_markup=keyboard)
-
-
 COURSE_VIEW_PAGINATION_GROUP = {
     'page_view_courses_all': all_courses_handler,
     'page_view_courses_student': student_courses_handler
@@ -183,8 +164,5 @@ def register_handler(view_router: Router):
         student_courses_handler,
         F.data.startswith('my_courses')
     )
-    view_router.callback_query.register(
-        process_ukassa,
-        F.data.startswith('ukassa_pay_btn')
-    )
+
   

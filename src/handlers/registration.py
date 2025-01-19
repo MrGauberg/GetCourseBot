@@ -1,6 +1,6 @@
 from aiogram import Router
 from src.core.config import texts, bot
-from src.handlers.course import get_course_handler, process_ukassa, student_course_handler
+from src.handlers.course import get_course_handler, student_course_handler
 from src.keyboards.main_menu_kb import phone_number_keyboard, registeration_kb
 from src.misc.validator import is_valid_email
 from src.services.application_client import application_client
