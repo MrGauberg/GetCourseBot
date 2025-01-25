@@ -26,12 +26,13 @@ async def course_details_kb(
     is_buyed: bool, 
     bot_id: int, 
     user_name: str,
+    user_id: int
 ) -> InlineKeyboardMarkup:
     buttons = []
 
-    # Добавить кнопку "Купить", только если курс не куплен
+    # Добавить кнопку "Подать заявку", только если курс не куплен
     if not is_buyed:
-        web_app_url = f"https://kl2jbr.ru/lead-create?bot_id={bot_id}&user_name={user_name}&course_id={course_id}"
+        web_app_url = f"https://kl2jbr.ru/lead-create?bot_id={bot_id}&user_name={user_name}&course_id={course_id}&user_id={user_id}"
         print(web_app_url)
         buttons.append([
             InlineKeyboardButton(
