@@ -44,6 +44,9 @@ class AplicationEndpoints:
 
     def _update_tg_user(self, tg_id):
         return f"{self.BASE_API_URL}/student/update-student/{tg_id}/"
+    
+    def _get_calendar_data(self, year, month):
+        return f"{self.BASE_API_URL}/event_calendar/{year}/{month}/"
 
 
 class ApplicationClient(AplicationEndpoints):
@@ -210,6 +213,12 @@ class ApplicationClient(AplicationEndpoints):
         return await self._make_request(
             "patch", self._update_tg_user(tg_id), data
         )
+    
+    async def get_calendar_data(self, year, month):
+        return await self._make_request(
+            "GET", self._get_calendar_data(year, month)
+        )
+
 
 
 application_client = ApplicationClient()

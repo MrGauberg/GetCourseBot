@@ -3,15 +3,12 @@ import os
 from aiogram import Bot
 from pytz import timezone
 from src.handlers import assignment
-
 from src.misc.set_bot_commands import set_commands
 
 moscow = timezone('Europe/Moscow')
 
-
 async def on_startup(bot: Bot):
     await set_commands(bot)
-
 
 async def main():
     from src.core.config import (
@@ -21,7 +18,8 @@ async def main():
         start,
         course,
         lesson,
-        registration
+        registration,
+        calendar  # Теперь calendar.router
     )
     from src.services.application_client import application_client
 
@@ -30,6 +28,10 @@ async def main():
     lesson.register_handler(view_router)
     assignment.register_handler(view_router, form_router)
     registration.register_handler(form_router)
+    
+    # Включаем роутер календаря в диспетчер
+    dp.include_router(calendar.router)
+
     dp.include_router(view_router)
     dp.include_router(form_router)
 
@@ -49,6 +51,8 @@ async def main():
         await application_client.close()
         await bot.session.close()
 
+def entrypoint():
+    asyncio.run(main())
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    entrypoint()
