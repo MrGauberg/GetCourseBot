@@ -55,7 +55,7 @@ async def generate_calendar_keyboard(year, month, calendar_data):
     ]
 
     # Заголовок месяца
-    month_name = f"{texts["months_ru"][str(month)]} {year}"
+    month_name = f"{texts['months_ru'].get(str(month), 'Неизвестный месяц')} {year}"
     keyboard.append([InlineKeyboardButton(text=month_name, callback_data="none")])
 
     # Заголовок дней недели
