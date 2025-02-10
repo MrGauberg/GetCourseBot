@@ -34,7 +34,9 @@ async def change_month(callback_query: CallbackQuery):
 
 async def show_day_description(callback_query: CallbackQuery):
     """Показывает описание дня, если оно есть"""
-    _, date_str = callback_query.data.split("_")
+    parts = callback_query.data.split("_")
+    date_str = parts[1]
+    time_str = parts[2] if len(parts) > 2 else None
     year, month, day = map(int, date_str.split("-"))
 
     # Получаем календарь для соответствующего месяца
@@ -45,7 +47,7 @@ async def show_day_description(callback_query: CallbackQuery):
 
     if selected_day and selected_day["is_description"]:
         formatted_date = f"{day:02d}.{month:02d}.{year}"
-        text = f"📅 {texts['date']}: {formatted_date}\n\n📝 {selected_day['description']}"
+        text = f"📅 {texts['date']}: {formatted_date} ⏰ {texts['time']}: {time_str or 'не указано'}\n\n📝 {selected_day['description']}"
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
                 [InlineKeyboardButton(text=texts["back_button"], callback_data=f"month_{year}_{month}")]
