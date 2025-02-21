@@ -110,4 +110,8 @@ async def generate_calendar_keyboard(year, month, calendar_data):
         InlineKeyboardButton(text=texts["forward"], callback_data=f"month_{next_year}_{next_month}")
     ])
 
+    keyboard.append([
+        InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")
+    ])
+
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
