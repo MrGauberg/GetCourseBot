@@ -1,5 +1,6 @@
 from typing import List
 from src.core.config import texts, TG_SUPPORT
+from src.core.settings import application_settings
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
@@ -26,7 +27,7 @@ async def course_details_kb(
 
     # Добавить кнопку "Подать заявку", только если курс не куплен
     if not is_buyed:
-        web_app_url = f"https://kl2jbr.ru/lead-create?bot_id={bot_id}&user_name={user_name}&course_id={course_id}&user_id={user_id}"
+        web_app_url = f"https://{application_settings.WEB_APP_URL}/lead-create?bot_id={bot_id}&user_name={user_name}&course_id={course_id}&user_id={user_id}"
         buttons.append([
             InlineKeyboardButton(
                 text=texts["course_request"],

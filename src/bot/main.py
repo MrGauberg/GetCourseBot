@@ -1,3 +1,5 @@
+# ТУТ ПРИМЕР АВТОРИЗАЦИИ КЛИЕНТА ПРИ ЗАПУСКЕ!!!!!
+
 import asyncio
 import os
 from aiogram import Bot

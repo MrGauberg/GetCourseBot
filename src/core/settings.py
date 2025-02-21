@@ -14,6 +14,7 @@ class BaseSettings(PydanticBaseSettings):
 
 class ApplicationSettings(BaseSettings):
     APPLICATION_URL: str
+    WEB_APP_URL: str
 
 
 application_settings = ApplicationSettings()

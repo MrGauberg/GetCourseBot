@@ -1,3 +1,8 @@
+
+# ЭТО ПРИМЕР КЛИЕНТА API!!!!!!
+
+
+
 import httpx
 from src.core.settings import application_settings
 from typing import Dict, Any, List, Tuple
