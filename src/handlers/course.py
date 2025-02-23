@@ -86,6 +86,7 @@ async def student_courses_handler(call: CallbackQuery,
                                   page: int = 1):
     data = await application_client.get_courses_by_student_id(
         call.from_user.id,
+        user_settings.USER_ID,
         page
     )
     await create_courses_handler(

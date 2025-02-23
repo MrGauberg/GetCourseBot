@@ -15,8 +15,8 @@ class AplicationEndpoints:
         # return f"{self.BASE_API_URL}/student-course/courses/{instructor_id}/?page={page}"
         return f"{self.BASE_API_URL}/courses/courses/{instructor_id}/?page={page}&page_size=5"
 
-    def _student_courses_url(self, tg_user_id, page):
-        return f"{self.BASE_API_URL}/student/student-courses/{tg_user_id}/?page={page}&page_size=5"
+    def _student_courses_url(self, tg_user_id, instructor_id, page):
+        return f"{self.BASE_API_URL}/student/student-courses/{instructor_id}/{tg_user_id}/?page={page}&page_size=5"
 
     @property
     def _create_student_url(self):
@@ -50,8 +50,8 @@ class AplicationEndpoints:
     def _update_tg_user(self, tg_id):
         return f"{self.BASE_API_URL}/student/update-student/{tg_id}/"
     
-    def _get_calendar_data(self, year, month):
-        return f"{self.BASE_API_URL}/event_calendar/{year}/{month}/"
+    def _get_calendar_data(self, year, month, instructor_id):
+        return f"{self.BASE_API_URL}/event_calendar/{instructor_id}/{year}/{month}/"
 
 
 class ApplicationClient(AplicationEndpoints):
@@ -189,8 +189,8 @@ class ApplicationClient(AplicationEndpoints):
         url = self._course_list_url(user_id, page)
         return await self._make_request("GET", url)
 
-    async def get_courses_by_student_id(self, tg_user_id: int, page: int) -> Any:
-        url = self._student_courses_url(tg_user_id, page)
+    async def get_courses_by_student_id(self, tg_user_id: int, instructor_id: int, page: int) -> Any:
+        url = self._student_courses_url(tg_user_id, instructor_id, page)
         return await self._make_request("GET", url)
 
     async def get_lessons_by_course_id(self, course_id,  page: int):
@@ -219,9 +219,9 @@ class ApplicationClient(AplicationEndpoints):
             "patch", self._update_tg_user(tg_id), data
         )
     
-    async def get_calendar_data(self, year, month):
+    async def get_calendar_data(self, year, month, instructor_id):
         return await self._make_request(
-            "GET", self._get_calendar_data(year, month)
+            "GET", self._get_calendar_data(year, month, instructor_id)
         )
 
 

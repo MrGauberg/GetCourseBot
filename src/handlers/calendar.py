@@ -5,18 +5,19 @@ from datetime import datetime
 from src.keyboards.pagination_kb import generate_calendar_keyboard
 from src.services.application_client import application_client
 from src.core.config import texts
+from src.core.settings import user_settings
 
 router = Router()  # Создаем роутер
 
 async def show_calendar(message: types.Message):
     today = datetime.today()
-    calendar_data = await application_client.get_calendar_data(today.year, today.month)
+    calendar_data = await application_client.get_calendar_data(today.year, today.month, user_settings.USER_ID)
     keyboard = await generate_calendar_keyboard(today.year, today.month, calendar_data)
     await message.answer("Расписание месяца:", reply_markup=keyboard)
 
 async def show_calendar_callback(callback_query: CallbackQuery):
     today = datetime.today()
-    calendar_data = await application_client.get_calendar_data(today.year, today.month)
+    calendar_data = await application_client.get_calendar_data(today.year, today.month, user_settings.USER_ID)
     keyboard = await generate_calendar_keyboard(today.year, today.month, calendar_data)
     await callback_query.message.edit_text("Расписание месяца:", reply_markup=keyboard)
     await callback_query.answer()
@@ -25,7 +26,7 @@ async def change_month(callback_query: CallbackQuery):
     _, year, month = callback_query.data.split("_")
     year, month = int(year), int(month)
 
-    calendar_data = await application_client.get_calendar_data(year, month)
+    calendar_data = await application_client.get_calendar_data(year, month, user_settings.USER_ID)
     keyboard = await generate_calendar_keyboard(year, month, calendar_data)
 
     await callback_query.message.edit_text("Расписание месяца:", reply_markup=keyboard)
@@ -40,7 +41,7 @@ async def show_day_description(callback_query: CallbackQuery):
     year, month, day = map(int, date_str.split("-"))
 
     # Получаем календарь для соответствующего месяца
-    calendar_data = await application_client.get_calendar_data(year, month)
+    calendar_data = await application_client.get_calendar_data(year, month, user_settings.USER_ID)
 
     # Ищем выбранный день
     selected_day = next((day for day in calendar_data["calendar"] if day["date"] == date_str), None)
