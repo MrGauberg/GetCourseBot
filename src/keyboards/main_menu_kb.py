@@ -46,7 +46,6 @@ async def course_details_kb(
 async def buyed_course_details(course_id: int, page: int):
     btns = [
         [InlineKeyboardButton(text=texts["course_lessons"], callback_data=f"course_lessons {course_id}")],
-        [InlineKeyboardButton(text=texts["calendar"], callback_data="show_calendar")],  # Добавил кнопку календаря
         [InlineKeyboardButton(text=texts["back_button"], callback_data=f"page_view_courses_student {page}")],
         [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")],
     ]
@@ -63,7 +62,6 @@ async def lesson_details_kb(page: int, assignments: List):
         ] for i, assignment in enumerate(assignments)
     ]
     btns.extend([
-        [InlineKeyboardButton(text=texts["calendar"], callback_data="show_calendar")],  # Добавил кнопку календаря
         [InlineKeyboardButton(text=texts["back_button"], callback_data=f"page_view_lessons {page}")],
         [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")],
     ])
@@ -79,7 +77,6 @@ async def assignment_kb(lesson_id: int, assignment_id, exists):
             InlineKeyboardButton(text=texts["pull_assignment_not"],
                                  callback_data=" ")
         ],
-        [InlineKeyboardButton(text=texts["calendar"], callback_data="show_calendar")],  # Добавил кнопку календаря
         [InlineKeyboardButton(text=texts["back_button"], callback_data=f"lessons {lesson_id}")],
         [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")]
     ]
@@ -88,7 +85,6 @@ async def assignment_kb(lesson_id: int, assignment_id, exists):
 
 async def assignment_respones_kb(back_call, back_button=True, skip_button=True, submit_button=False, finish_assignment=False):
     btns = [
-        [InlineKeyboardButton(text=texts["calendar"], callback_data="show_calendar")],  # Добавил кнопку календаря
         [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")],
     ]
 
@@ -115,7 +111,6 @@ async def phone_number_keyboard():
 
 async def registeration_kb(back_call):
     btns = [
-        [InlineKeyboardButton(text=texts["calendar"], callback_data="show_calendar")],  # Добавил кнопку календаря
         [InlineKeyboardButton(text=texts["back_button"], callback_data=back_call)],
         [InlineKeyboardButton(text=texts["cancel"], callback_data="back_to_main_menu")]
     ]
