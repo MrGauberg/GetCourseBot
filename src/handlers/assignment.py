@@ -82,6 +82,7 @@ async def assignment_video_process(message: Message, state: FSMContext):
     print(data)
     try:
         link = message.text.strip()
+        print("link", link)
         if not is_valid_url(link):
             await bot.edit_message_text(
                 chat_id=message.from_user.id,
