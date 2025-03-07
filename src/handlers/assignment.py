@@ -189,7 +189,7 @@ async def finish_assignment_handler(call: CallbackQuery, state: FSMContext):
             file_name = os.path.basename(file_path)
             file_tuples.append(('files', (file_name, file_content, 'application/octet-stream')))
         await sync_to_async(os.remove)(file_path)
-
+    print("assignment_model",data["assignment_model"])
     await application_client.create_assignment_response(
         data['assignment_model'], files=file_tuples
     )
