@@ -79,10 +79,8 @@ async def assignment_text_process(message: Message, state: FSMContext):
 async def assignment_video_process(message: Message, state: FSMContext):
 
     data = await state.get_data()
-    print(data)
     try:
         link = message.text.strip()
-        print("link", link)
         if not is_valid_url(link):
             await bot.edit_message_text(
                 chat_id=message.from_user.id,
@@ -189,7 +187,7 @@ async def finish_assignment_handler(call: CallbackQuery, state: FSMContext):
             file_name = os.path.basename(file_path)
             file_tuples.append(('files', (file_name, file_content, 'application/octet-stream')))
         await sync_to_async(os.remove)(file_path)
-    print("assignment_model",data["assignment_model"])
+
     await application_client.create_assignment_response(
         data['assignment_model'], files=file_tuples
     )
