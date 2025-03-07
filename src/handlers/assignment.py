@@ -79,6 +79,7 @@ async def assignment_text_process(message: Message, state: FSMContext):
 async def assignment_video_process(message: Message, state: FSMContext):
 
     data = await state.get_data()
+    print(data)
     try:
         link = message.text.strip()
         if not is_valid_url(link):
