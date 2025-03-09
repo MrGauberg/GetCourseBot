@@ -1,27 +1,25 @@
 #!/bin/sh
-# Скрипт для пересборки образа и обновления всех контейнеров, начинающихся с "bot_"
+# Скрипт для пересборки и перезапуска всех контейнеров, имена которых начинаются с "bot_"
 # Использование:
 # 1. Сделайте скрипт исполняемым: chmod +x restart_bots.sh
 # 2. Запустите его: ./restart_bots.sh
 
-IMAGE_NAME="my-telegram-bot-image"
-
-# Пересобираем образ
-echo "Пересобираем образ: $IMAGE_NAME"
-docker build -t $IMAGE_NAME .
-
 # Получаем список контейнеров, начинающихся с "bot_"
 containers=$(docker ps --format "{{.Names}}" | grep '^bot_')
 
-# Обновляем контейнеры с новым образом
+# Пересобираем и перезапускаем каждый найденный контейнер
 for container in $containers; do
-  echo "Обновляем контейнер: $container"
+  echo "Останавливаем контейнер: $container"
   docker stop "$container"
 
-  # Обновляем образ контейнера без его удаления
-  docker container commit "$container" "$IMAGE_NAME"
+  echo "Удаляем контейнер: $container"
+  docker rm "$container"
 
-  docker start "$container"
+  # Получаем имя образа, из которого был запущен контейнер
+  image=$(docker ps -a --filter "name=$container" --format "{{.Image}}")
+
+  echo "Пересоздаем контейнер: $container из образа $image"
+  docker run -d --name "$container" "$image"
 done
 
-echo "Все контейнеры, начинающиеся на 'bot_', были обновлены и перезапущены."
+echo "Все контейнеры, начинающиеся на 'bot_', были пересобраны и запущены."
