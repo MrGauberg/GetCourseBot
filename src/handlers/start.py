@@ -12,12 +12,12 @@ from typing import Union
 
 
 async def on_start(message: Message):
-    tg_user_data = {
-        'tg_id': message.from_user.id,
-        'user_name': message.from_user.username,
-        'teacher_id': user_settings.USER_ID
-    }
-    await application_client.create_students(tg_user_data)
+    # tg_user_data = {
+    #     'tg_id': message.from_user.id,
+    #     'user_name': message.from_user.username,
+    #     'teacher_id': user_settings.USER_ID
+    # }
+    # await application_client.create_students(tg_user_data)
     await message.answer(
         text=texts['start_text'],
         reply_markup=await main_menu()
