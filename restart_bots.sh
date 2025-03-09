@@ -13,11 +13,15 @@ docker build -t $IMAGE_NAME .
 # Получаем список контейнеров, начинающихся с "bot_"
 containers=$(docker ps --format "{{.Names}}" | grep '^bot_')
 
-# Перезапускаем контейнеры с новым образом
+# Обновляем контейнеры с новым образом
 for container in $containers; do
   echo "Обновляем контейнер: $container"
   docker stop "$container"
-  docker container start "$container"
+
+  # Обновляем образ контейнера без его удаления
+  docker container commit "$container" "$IMAGE_NAME"
+
+  docker start "$container"
 done
 
 echo "Все контейнеры, начинающиеся на 'bot_', были обновлены и перезапущены."
