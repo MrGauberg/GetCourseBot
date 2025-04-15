@@ -2,7 +2,6 @@
 name = "bot"
 version = "0.1.0"
 description = ""
-authors = ["kamran <diyeqo@icloud.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]

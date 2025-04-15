@@ -180,3 +180,5 @@ locales/*
 
 bot/migrations/*
 !bot/migrations/__init__.py
+
+!*.env.example
