@@ -50,6 +50,10 @@ async def pull_assignment_process(call: CallbackQuery, state: FSMContext):
     )
 
     if is_webhook:
+        try:
+            await call.message.edit_reply_markup(reply_markup=None)
+        except Exception:
+            pass
         bot_message = await call.message.answer(
             const_text,
             reply_markup=kb
