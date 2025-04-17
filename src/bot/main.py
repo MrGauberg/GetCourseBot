@@ -26,7 +26,7 @@ async def start_webhook_server(dp: Dispatcher, bot: Bot) -> None:
     app = web.Application()
     app["dp"], app["bot"] = dp, bot
     app.router.add_post("/internal/send-message/", send_message_to_chat)
-    app.router.add_post("/internal/request-revision/", send_revision)
+    app.router.add_post("/internal/send-revision/", send_revision)
 
     runner = web.AppRunner(app)
     await runner.setup()
