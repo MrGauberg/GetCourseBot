@@ -44,22 +44,7 @@ async def send_revision(request: web.Request) -> web.Response:
         data          = await request.json()
         chat_id       = int(data["chat_id"])
         assignment_id = int(data["assignment_id"])
-        base_text     = data["text"]          
-        video_url     = data.get("video_url")
-        files         = data.get("files", [])
-
-        parts: list[str] = [base_text]
-
-        if video_url:
-            parts += ["", "<b>Ссылка:</b>", f'<a href="{video_url}">{video_url}</a>']
-
-        if files:
-            parts += ["", "<b>Файлы:</b>"]
-            for link in files:
-                name = link.rsplit("/", 1)[-1]
-                parts.append(f'• <a href="{link}">{name}</a>')
-
-        full_text = "\n".join(parts)
+        full_text     = data["text"]          
 
         kb = types.InlineKeyboardMarkup(
             inline_keyboard=[[
