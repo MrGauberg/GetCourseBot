@@ -1,60 +1,72 @@
-# ТУТ ПРИМЕР АВТОРИЗАЦИИ КЛИЕНТА ПРИ ЗАПУСКЕ!!!!!
+from __future__ import annotations
 
 import asyncio
+import logging
 import os
-from aiogram import Bot
-from pytz import timezone
-from src.handlers import assignment
+from aiogram import Bot, Dispatcher
+from aiohttp import web
+
+from internal_webhooks import send_message_to_chat
+from src.core.config import dp, bot, form_router, view_router
+from src.handlers import start, course, lesson, registration, calendar, assignment
 from src.misc.set_bot_commands import set_commands
+from src.services.application_client import application_client
 
-moscow = timezone('Europe/Moscow')
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+log = logging.getLogger(__name__)
 
-async def on_startup(bot: Bot):
+async def start_webhook_server(dp: Dispatcher, bot: Bot) -> None:
+    host = os.getenv("INTERNAL_HOST", "0.0.0.0")
+    port = int(os.getenv("INTERNAL_PORT", 8090))
+
+    app = web.Application()
+    app["dp"], app["bot"] = dp, bot
+    app.router.add_post("/internal/send-message/", send_message_to_chat)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host, port)
+    await site.start()
+    log.info(f"Internal webhook server http://{host}:{port}")
+
+async def on_startup(bot: Bot) -> None:
     await set_commands(bot)
 
-async def main():
-    from src.core.config import (
-        dp, bot, form_router, view_router
-    )
-    from src.handlers import (
-        start,
-        course,
-        lesson,
-        registration,
-        calendar  # Теперь calendar.router
-    )
-    from src.services.application_client import application_client
-
+def register_routers() -> None:
     start.register_handler(dp)
     course.register_handler(view_router)
     lesson.register_handler(view_router)
     assignment.register_handler(view_router, form_router)
     registration.register_handler(form_router)
-    
-    # Включаем роутер календаря в диспетчер
-    dp.include_router(calendar.router)
 
+    dp.include_router(calendar.router)
     dp.include_router(view_router)
     dp.include_router(form_router)
 
-    # Авторизация для получения токенов
-    try:
-        print("Authenticating...")
-        await application_client.authenticate()
-        print("Authentication successful!")
-    except Exception as e:
-        print(f"Authentication failed: {e}")
-        return  
+async def main() -> None:
+    register_routers()
+
+    log.info("Authenticating application client…")
+    await application_client.authenticate()
+    log.info("Auth ok")
+
+    await on_startup(bot)
 
     try:
-        await on_startup(bot)
-        await dp.start_polling(bot)
+        await asyncio.gather(
+            dp.start_polling(bot),
+            start_webhook_server(dp, bot),
+        )
+    except asyncio.CancelledError:
+        pass
     finally:
         await application_client.close()
         await bot.session.close()
+        log.info("Shutdown complete")
 
-def entrypoint():
+if __name__ == "__main__":
     asyncio.run(main())
-
-if __name__ == '__main__':
-    entrypoint()
