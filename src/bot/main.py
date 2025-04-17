@@ -6,7 +6,7 @@ import os
 from aiogram import Bot, Dispatcher
 from aiohttp import web
 
-from internal_webhooks import send_message_to_chat
+from internal_webhooks import send_revision, send_message_to_chat
 from src.core.config import dp, bot, form_router, view_router
 from src.handlers import start, course, lesson, registration, calendar, assignment
 from src.misc.set_bot_commands import set_commands
@@ -26,6 +26,7 @@ async def start_webhook_server(dp: Dispatcher, bot: Bot) -> None:
     app = web.Application()
     app["dp"], app["bot"] = dp, bot
     app.router.add_post("/internal/send-message/", send_message_to_chat)
+    app.router.add_post("/internal/request-revision/", send_revision)
 
     runner = web.AppRunner(app)
     await runner.setup()

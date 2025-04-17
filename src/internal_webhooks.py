@@ -1,23 +1,60 @@
 import logging
 from aiohttp import web
-from aiogram import Bot
+from aiogram import Bot, types
 
 log = logging.getLogger(__name__)
 
 async def send_message_to_chat(request: web.Request) -> web.Response:
     """
     POST /internal/send-message/
-    JSON: { "chat_id": int, "text": str, "parse_mode": "HTML|MarkdownV2|None" }
+    {
+      "chat_id": int,
+      "text": str,
+      "parse_mode": "HTML|MarkdownV2|None"
+    }
     """
     bot: Bot = request.app["bot"]
     try:
-        data = await request.json()
-        chat_id   = int(data["chat_id"])
-        text      = data["text"]
-        parsemode = data.get("parse_mode") or None
+        data       = await request.json()
+        chat_id    = int(data["chat_id"])
+        text       = data["text"]
+        parse_mode = data.get("parse_mode") or None
 
-        await bot.send_message(chat_id, text, parse_mode=parsemode)
+        await bot.send_message(chat_id, text, parse_mode=parse_mode)
         return web.json_response({"status": "ok"})
     except Exception as e:
         log.exception("send_message_to_chat error")
+        return web.json_response({"status": "error", "detail": str(e)}, status=500)
+
+async def send_revision(request: web.Request) -> web.Response:
+    """
+    POST /internal/send-revision/
+    {
+      "chat_id": int,
+      "assignment_id": int,
+      "text": str,                 # уже готовый HTML‑текст
+      "parse_mode": "HTML|MarkdownV2|None"
+    }
+    """
+    bot: Bot = request.app["bot"]
+    try:
+        data          = await request.json()
+        chat_id       = int(data["chat_id"])
+        assignment_id = int(data["assignment_id"])
+        text          = data["text"]
+        parse_mode    = data.get("parse_mode") or "HTML"
+
+        kb = types.InlineKeyboardMarkup(
+            inline_keyboard=[[
+                types.InlineKeyboardButton(
+                    text="Отправить новое решение",
+                    callback_data=f"pull_assignment {assignment_id}"
+                )
+            ]]
+        )
+
+        await bot.send_message(chat_id, text, parse_mode=parse_mode, reply_markup=kb)
+        return web.json_response({"status": "ok"})
+    except Exception as e:
+        log.exception("send_revision error")
         return web.json_response({"status": "error", "detail": str(e)}, status=500)
