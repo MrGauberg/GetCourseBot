@@ -54,7 +54,6 @@ async def pull_assignment_process(call: CallbackQuery, state: FSMContext):
             const_text,
             reply_markup=kb
         )
-        await call.message.delete()
 
 
     else:
