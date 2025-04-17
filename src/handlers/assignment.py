@@ -54,6 +54,9 @@ async def pull_assignment_process(call: CallbackQuery, state: FSMContext):
             const_text,
             reply_markup=kb
         )
+        await call.message.delete()
+
+
     else:
         bot_message = await call.message.edit_text(
             const_text,
