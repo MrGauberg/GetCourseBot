@@ -39,18 +39,25 @@ async def assignment_handler(call: CallbackQuery, state: FSMContext):
 
 
 async def pull_assignment_process(call: CallbackQuery, state: FSMContext):
+    parts = call.data.split()
+    assignment_id = int(parts[1])
+    is_webhook = len(parts) > 2 and parts[2] == "wb"
 
-    assignment_id = int(call.data.split()[1])
     bot_message = await call.message.edit_text(
         texts["TextState"],
-        reply_markup=await assignment_respones_kb(f"homework {assignment_id}")
+        reply_markup=await assignment_respones_kb(
+            f"homework {assignment_id}",
+            back_button=not is_webhook
+        )
     )
+
     await state.update_data(
         assignment_model={
             "assignment": assignment_id,
             "student": call.from_user.id
         },
-        bot_message_id=bot_message.message_id)
+        bot_message_id=bot_message.message_id
+    )
     await state.set_state(AssignmentState.Text)
 
 
@@ -133,7 +140,7 @@ async def assignment_doc_process(message: Message, state: FSMContext):
         # Скачивание файла
         if not os.path.exists("documents"):
             os.makedirs("documents")
-        file_path_to_save = f"documents/temp_{file_id}_{file_name}"
+        file_path_to_save = f"documents/{file_name}_{file_id}"
         await bot.download_file(file_path, destination=file_path_to_save)
 
         # Сохранение пути к файлу
