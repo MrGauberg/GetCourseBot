@@ -138,47 +138,76 @@ async def assignment_video_process(message: Message, state: FSMContext):
 
 from aiogram.types import ContentType
 
+from pathlib import Path
+
 async def assignment_doc_process(message: Message, state: FSMContext):
     data = await state.get_data()
     files = data.get('files', [])
-    text = data['assignment_model'].get('bot_msg_text')
-    content_type = message.content_type if isinstance(message, Message) else None
-    if content_type == ContentType.DOCUMENT:
-        # Обработка полученного документа
-        document = message.document
-        file_id = document.file_id
-        file_name = document.file_name
+    if message.content_type == ContentType.DOCUMENT:
+        doc = message.document
 
-        # Получение пути к файлу от Telegram
-        file = await bot.get_file(file_id)
-        file_path = file.file_path
+        # Определяем номер файла (1, 2, 3, ...)
+        file_index = len(files) + 1
 
-        # Скачивание файла
-        if not os.path.exists("documents"):
-            os.makedirs("documents")
-        file_path_to_save = f"documents/{file_name}_{message.from_user.id}"
-        await bot.download_file(file_path, destination=file_path_to_save)
+        # Готовим директорию
+        save_dir = Path("documents")
+        save_dir.mkdir(exist_ok=True)
 
-        # Сохранение пути к файлу
-        files.append(file_path_to_save)
-        if len(files) == 1:
-            text += "\n\n" + texts["file_received"] + "\n\n"
+        # Формируем путь с порядковым номером
+        dest = save_dir / f"{doc.file_name.rsplit('.', 1)[0]}_{message.from_user.id}_{file_index}.{doc.file_name.rsplit('.', 1)[-1]}"
 
-        text += "\n" + f"{len(files)}. {file_name}"
-        data['assignment_model']['bot_msg_text'] = text
+        await doc.download(destination_file=dest)
+
+        files.append(str(dest))
+        data['assignment_model']['bot_msg_text'] += (
+            ("\n\n" + texts["file_received"] + "\n\n") if file_index == 1 else ""
+        ) + f"{file_index}. {doc.file_name}"
 
         await state.update_data(files=files, assignment_model=data['assignment_model'])
         await message.delete()
+
+        # Обновляем сообщение бота
         await bot.edit_message_text(
             chat_id=message.from_user.id,
             message_id=data['bot_message_id'],
-            text=text,
+            text=data['assignment_model']['bot_msg_text'],
             reply_markup=await assignment_respones_kb(
                 'back_to_assignment_text_state',
-            finish_assignment=True,
-            skip_button=False
+                finish_assignment=True,
+                skip_button=False
             )
         )
+
+async def finish_assignment_handler(call: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    files = data.get('files', [])
+    file_tuples = []
+
+    for path in files:
+        if not os.path.exists(path):
+            continue
+        async with aiofiles.open(path, 'rb') as f:
+            content = await f.read()
+        file_name = os.path.basename(path).split(f"_{call.from_user.id}_")[-1]
+        file_tuples.append(('files', (file_name, content, 'application/octet-stream')))
+        await sync_to_async(os.remove)(path)
+
+    await application_client.create_assignment_response(
+        data['assignment_model'],
+        files=file_tuples
+    )
+    await state.clear()
+
+    await bot.edit_message_text(
+        chat_id=call.from_user.id,
+        message_id=data['bot_message_id'],
+        text=texts['assignment_created_success'],
+        reply_markup=await assignment_respones_kb(
+            'back_to_assignment_text_state',
+            back_button=False,
+            skip_button=False
+        )
+    )
 
 
 async def finish_assignment_handler(call: CallbackQuery, state: FSMContext):
