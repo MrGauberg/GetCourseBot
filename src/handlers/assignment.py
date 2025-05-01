@@ -202,7 +202,7 @@ async def finish_assignment_handler(call: CallbackQuery, state: FSMContext):
                 data['lessons_page'], data['assignments']),
             disable_web_page_preview=True
         )
-        await state.reset_state(with_data=False)
+        await state.set_state(None)
         return
 
     # Подготовка массивов для отправки
