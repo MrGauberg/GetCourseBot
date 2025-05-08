@@ -11,13 +11,13 @@ router = Router()  # Создаем роутер
 
 async def show_calendar(message: types.Message):
     today = datetime.today()
-    calendar_data = await application_client.get_calendar_data(today.year, today.month, user_settings.USER_ID)
+    calendar_data = await application_client.get_calendar_data(today.year, today.month, user_settings.USER_ID, message.from_user.id)
     keyboard = await generate_calendar_keyboard(today.year, today.month, calendar_data)
     await message.answer("Расписание месяца:", reply_markup=keyboard)
 
 async def show_calendar_callback(callback_query: CallbackQuery):
     today = datetime.today()
-    calendar_data = await application_client.get_calendar_data(today.year, today.month, user_settings.USER_ID)
+    calendar_data = await application_client.get_calendar_data(today.year, today.month, user_settings.USER_ID, callback_query.from_user.id)
     keyboard = await generate_calendar_keyboard(today.year, today.month, calendar_data)
     await callback_query.message.edit_text("Расписание месяца:", reply_markup=keyboard)
     await callback_query.answer()

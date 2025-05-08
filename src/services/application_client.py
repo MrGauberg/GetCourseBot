@@ -219,9 +219,9 @@ class ApplicationClient(AplicationEndpoints):
             "patch", self._update_tg_user(tg_id), data
         )
     
-    async def get_calendar_data(self, year, month, instructor_id):
+    async def get_calendar_data(self, year, month, instructor_id, student_tg):
         return await self._make_request(
-            "GET", self._get_calendar_data(year, month, instructor_id)
+            "GET", self._get_calendar_data(year, month, instructor_id, student_tg)
         )
 
 
