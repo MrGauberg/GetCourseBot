@@ -82,13 +82,18 @@ async def generate_calendar_keyboard(year, month, calendar_data):
     # Заполняем текущий месяц
     for item in days_data:
         date_str = item["date"]
-        time = item["time"]
         day = int(date_str.split("-")[-1])
-        status = "✅" if item["description"] else "⚪"
+        has_events = bool(item.get("events"))
+        status = "✅" if has_events else "⚪"
+        # всегда передаём индекс 0 — первый из списка
+        callback = f"day_{date_str}_0" if has_events else "none"
 
         index = first_weekday + (day - 1)
         if 0 <= index < 35:
-            month_calendar[index] = InlineKeyboardButton(text=f"{day} {status}", callback_data = f"day_{date_str}_{time}")
+            month_calendar[index] = InlineKeyboardButton(
+                text=f"{day} {status}",
+                callback_data=callback
+            )
 
     # Заполняем оставшиеся дни следующего месяца
     next_month = month + 1 if month < 12 else 1

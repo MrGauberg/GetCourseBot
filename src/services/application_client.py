@@ -50,8 +50,8 @@ class AplicationEndpoints:
     def _update_tg_user(self, tg_id):
         return f"{self.BASE_API_URL}/student/update-student/{tg_id}/"
     
-    def _get_calendar_data(self, year, month, instructor_id):
-        return f"{self.BASE_API_URL}/event_calendar/{instructor_id}/{year}/{month}/"
+    def _get_calendar_data(self, year, month, instructor_id, student_tg):
+        return f"{self.BASE_API_URL}/event_calendar/{instructor_id}/{student_tg}/{year}/{month}/"
 
 
 class ApplicationClient(AplicationEndpoints):

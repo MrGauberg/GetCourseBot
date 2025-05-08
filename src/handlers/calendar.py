@@ -26,7 +26,7 @@ async def change_month(callback_query: CallbackQuery):
     _, year, month = callback_query.data.split("_")
     year, month = int(year), int(month)
 
-    calendar_data = await application_client.get_calendar_data(year, month, user_settings.USER_ID)
+    calendar_data = await application_client.get_calendar_data(year, month, user_settings.USER_ID, callback_query.from_user.id)
     keyboard = await generate_calendar_keyboard(year, month, calendar_data)
 
     await callback_query.message.edit_text("Расписание месяца:", reply_markup=keyboard)
@@ -34,29 +34,46 @@ async def change_month(callback_query: CallbackQuery):
 
 
 async def show_day_description(callback_query: CallbackQuery):
-    """Показывает описание дня, если оно есть"""
-    parts = callback_query.data.split("_")
-    date_str = parts[1]
-    time_str = parts[2] if len(parts) > 2 else None
+    # распарсим date и index
+    _, date_str, idx_str = callback_query.data.split("_")
+    index = int(idx_str)
     year, month, day = map(int, date_str.split("-"))
 
-    # Получаем календарь для соответствующего месяца
-    calendar_data = await application_client.get_calendar_data(year, month, user_settings.USER_ID)
+    # получим свежие данные календаря
+    calendar_data = await application_client.get_calendar_data(
+        year, month, user_settings.USER_ID, callback_query.from_user.id
+    )
+    selected = next(
+        (d for d in calendar_data["calendar"] if d["date"] == date_str),
+        None
+    )
+    if not selected or not selected.get("events"):
+        return await callback_query.answer("Событий нет.", show_alert=True)
 
-    # Ищем выбранный день
-    selected_day = next((day for day in calendar_data["calendar"] if day["date"] == date_str), None)
+    events = selected["events"]
+    ev = events[index]
+    text = (
+        f"📅 {day:02d}.{month:02d}.{year}\n"
+        f"🏷 {ev['cource']}\n"
+        f"📝 {ev['description']}\n"
+        f"⏰ {ev.get('time') or 'не указано'}"
+    )
 
-    if selected_day and selected_day["is_description"]:
-        formatted_date = f"{day:02d}.{month:02d}.{year}"
-        text = f"📅 {texts['date']}: {formatted_date} ⏰ {texts['time']}: {time_str or 'не указано'}\n\n📝 {selected_day['description']}"
-        keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text=texts["back_button"], callback_data=f"month_{year}_{month}")]
-            ]
-        )
-        await callback_query.message.edit_text(text, reply_markup=keyboard)
-    else:
-        await callback_query.answer("Для этого дня нет описания.", show_alert=True)
+    # строим навигацию стрелками
+    nav = []
+    if index > 0:
+        nav.append(InlineKeyboardButton("⬅️", callback_data=f"day_{date_str}_{index-1}"))
+    nav.append(InlineKeyboardButton(f"{index+1}/{len(events)}", callback_data="none"))
+    if index < len(events)-1:
+        nav.append(InlineKeyboardButton("➡️", callback_data=f"day_{date_str}_{index+1}"))
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        nav,
+        [InlineKeyboardButton(text=texts["back_button"], callback_data=f"month_{year}_{month}")]
+    ])
+    await callback_query.message.edit_text(text, reply_markup=keyboard)
+    await callback_query.answer()
+
 
 
 # Регистрация обработчиков
