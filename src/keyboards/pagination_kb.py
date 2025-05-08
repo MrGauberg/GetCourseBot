@@ -90,7 +90,7 @@ async def generate_calendar_keyboard(year, month, calendar_data):
         index = first_weekday + (day - 1)
         if 0 <= index < 35:
             month_calendar[index] = InlineKeyboardButton(
-                text="✅" if has_events else day,
+                text="✅" if has_events else str(day),
                 callback_data=callback
             )
 
