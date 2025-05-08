@@ -34,23 +34,20 @@ async def change_month(callback_query: CallbackQuery):
 
 
 async def show_day_description(callback_query: CallbackQuery):
-    # распарсим date и index
-    _, date_str, idx_str = callback_query.data.split("_")
-    index = int(idx_str)
+    _, date_str, idx = callback_query.data.split("_")
+    index = int(idx)
     year, month, day = map(int, date_str.split("-"))
 
-    # получим свежие данные календаря
-    calendar_data = await application_client.get_calendar_data(
-        year, month, user_settings.USER_ID, callback_query.from_user.id
+    cal = await application_client.get_calendar_data(
+        year, month,
+        user_settings.USER_ID,
+        callback_query.from_user.id
     )
-    selected = next(
-        (d for d in calendar_data["calendar"] if d["date"] == date_str),
-        None
-    )
-    if not selected or not selected.get("events"):
+    sel = next((d for d in cal["calendar"] if d["date"] == date_str), None)
+    if not sel or not sel.get("events"):
         return await callback_query.answer("Событий нет.", show_alert=True)
 
-    events = selected["events"]
+    events = sel["events"]
     ev = events[index]
     text = (
         f"📅 {day:02d}.{month:02d}.{year}\n"
@@ -59,20 +56,40 @@ async def show_day_description(callback_query: CallbackQuery):
         f"⏰ {ev.get('time') or 'не указано'}"
     )
 
-    # строим навигацию стрелками
     nav = []
     if index > 0:
-        nav.append(InlineKeyboardButton("⬅️", callback_data=f"day_{date_str}_{index-1}"))
-    nav.append(InlineKeyboardButton(f"{index+1}/{len(events)}", callback_data="none"))
-    if index < len(events)-1:
-        nav.append(InlineKeyboardButton("➡️", callback_data=f"day_{date_str}_{index+1}"))
+        nav.append(
+            InlineKeyboardButton(
+                text="⬅️",
+                callback_data=f"day_{date_str}_{index-1}"
+            )
+        )
+    nav.append(
+        InlineKeyboardButton(
+            text=f"{index+1}/{len(events)}",
+            callback_data="none"
+        )
+    )
+    if index < len(events) - 1:
+        nav.append(
+            InlineKeyboardButton(
+                text="➡️",
+                callback_data=f"day_{date_str}_{index+1}"
+            )
+        )
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         nav,
-        [InlineKeyboardButton(text=texts["back_button"], callback_data=f"month_{year}_{month}")]
+        [
+            InlineKeyboardButton(
+                text=texts["back_button"],
+                callback_data=f"month_{year}_{month}"
+            )
+        ]
     ])
     await callback_query.message.edit_text(text, reply_markup=keyboard)
     await callback_query.answer()
+
 
 
 
