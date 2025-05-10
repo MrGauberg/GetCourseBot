@@ -27,7 +27,7 @@ else:
 
 bot = Bot(token=user_settings.BOT_TOKEN, parse_mode='HTML')
 dp = Dispatcher(storage=storage)
-TG_SUPPORT = f"https://t.me/{user_settings.USER_TG_NAME}"
+TG_SUPPORT = f"https://t.me/{user_settings.TECH_SUPPORT_TG_NAME}"
 scheduler = AsyncIOScheduler()
 
 texts = get_text("texts.json")

@@ -24,7 +24,7 @@ class UserSettings(BaseSettings):
     BOT_TOKEN: str
     UKASSA_TOKEN: str
     USER_TG_ID: str
-    USER_TG_NAME: str
+    TECH_SUPPORT_TG_NAME: str
     USER_ID: str
     YOOKASSA_SHOP_ID: str
     YOOKASSA_SECRET_KEY: str
