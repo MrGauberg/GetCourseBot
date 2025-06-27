@@ -1,4 +1,4 @@
-FROM python:3.11
+FROM python:3.11-slim
 
 
 ENV PYTHONUNBUFFERED 1
@@ -16,5 +16,7 @@ COPY . .
 RUN poetry config virtualenvs.create false \
   && poetry install --no-interaction
 
+# заставляем при DNS-lookup отдавать предпочтение IPv4
+RUN echo "precedence ::ffff:0:0/96  100" >> /etc/gai.conf
 
 CMD ["poetry", "run", "python", "src/bot/main.py"]
