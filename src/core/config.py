@@ -7,6 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
 from src.core.text import get_text
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from aiogram.client.session.aiohttp import AiohttpSession
 
 logging.basicConfig(level=logging.INFO)
 file_handler = logging.FileHandler('bot.log')
@@ -28,11 +29,11 @@ else:
     storage = MemoryStorage()
 
 connector = aiohttp.TCPConnector(family=socket.AF_INET)
-session = aiohttp.ClientSession(connector=connector)
+session = AiohttpSession(connector=connector)
 bot = Bot(
     token=user_settings.BOT_TOKEN,
     parse_mode='HTML',
-    session=session,       # <- передаём свой session
+    session=session,
 )
 dp = Dispatcher(storage=storage)
 TG_SUPPORT = f"https://t.me/{user_settings.TECH_SUPPORT_TG_NAME}"
