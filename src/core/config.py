@@ -1,4 +1,6 @@
 import logging
+import socket
+import aiohttp
 from aiogram import Bot, Dispatcher, Router
 from .settings import user_settings, redis_settings
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -25,7 +27,13 @@ if redis_settings.REDIS_HOST:
 else:
     storage = MemoryStorage()
 
-bot = Bot(token=user_settings.BOT_TOKEN, parse_mode='HTML')
+connector = aiohttp.TCPConnector(family=socket.AF_INET)
+session = aiohttp.ClientSession(connector=connector)
+bot = Bot(
+    token=user_settings.BOT_TOKEN,
+    parse_mode='HTML',
+    session=session,       # <- передаём свой session
+)
 dp = Dispatcher(storage=storage)
 TG_SUPPORT = f"https://t.me/{user_settings.TECH_SUPPORT_TG_NAME}"
 scheduler = AsyncIOScheduler()
