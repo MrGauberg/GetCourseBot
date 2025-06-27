@@ -13,7 +13,6 @@ services:
       - "8000:8000"
     networks:
       - getcourse_app_net
-      - default
 networks:
   getcourse_app_net:
     external: true  # Сеть сервиса getcourse
