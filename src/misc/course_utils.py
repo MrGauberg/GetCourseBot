@@ -25,9 +25,6 @@ def get_item_text(texts: Dict, lesson: Dict) -> str:
         lesson['title'],
         lesson['content'],
     )
-    video = lesson.get("video_url")
-    if video:
-        text = f"{text}\n\n{texts['video'].format(video)}"
 
     files = lesson.get("files_from_storage", [])
     # Фильтруем файлы - оставляем только документы (исключаем type "video")
@@ -37,6 +34,10 @@ def get_item_text(texts: Dict, lesson: Dict) -> str:
             [f"📄 <a href=\"{doc['url']}\"><b>{doc['name']}</b></a>" for doc in documents]
         )
         text = f"{text}\n\n{texts['materials']}\n{materials}"
+
+    video = lesson.get("video_url")
+    if video:
+        text = f"{text}\n\n{texts['video'].format(video)}"
 
     return text
 
