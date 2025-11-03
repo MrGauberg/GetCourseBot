@@ -48,6 +48,10 @@
     "finish_assignment": "✅ Завершить отправку",
     "date": "Дата",
     "time": "Время",
+    "video_btn": "Смотреть видео",
+    "choose_video": "<b>Выберите видео:</b>",
+    "watch_video": "Смотреть видео: {}",
+    "video_not_found": "Видео не найдено",
 
     "months_ru": {
         "1": "Январь",

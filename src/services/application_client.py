@@ -4,9 +4,12 @@
 
 
 import httpx
+import logging
 from src.core.settings import application_settings
 from typing import Dict, Any, List, Tuple
 from src.core.config import user_settings
+
+logger = logging.getLogger(__name__)
 
 class AplicationEndpoints:
     BASE_API_URL = application_settings.APPLICATION_URL
@@ -52,6 +55,12 @@ class AplicationEndpoints:
     
     def _get_calendar_data(self, year, month, instructor_id, student_tg):
         return f"{self.BASE_API_URL}/event_calendar/{instructor_id}/{student_tg}/{year}/{month}/"
+
+    def _lesson_videos_list_url(self, lesson_id):
+        return f"{self.BASE_API_URL}/videos/lesson/{lesson_id}/list"
+
+    def _assignment_videos_list_url(self, assignment_id):
+        return f"{self.BASE_API_URL}/videos/assignment/{assignment_id}/list"
 
 
 class ApplicationClient(AplicationEndpoints):
@@ -223,6 +232,38 @@ class ApplicationClient(AplicationEndpoints):
         return await self._make_request(
             "GET", self._get_calendar_data(year, month, instructor_id, student_tg)
         )
+
+    async def get_videos_by_lesson_id(self, lesson_id: int, init_data: str):
+        """
+        Получает список видео для урока.
+        
+        Args:
+            lesson_id: ID урока
+            init_data: Telegram initData строка для заголовка X-Telegram-Init-Data
+            
+        Returns:
+            Словарь с результатами: {"count": int, "next": str|None, "previous": str|None, "results": list}
+        """
+        url = self._lesson_videos_list_url(lesson_id)
+        headers = {"X-Telegram-Init-Data": init_data}
+        logger.info(f"[get_videos_by_lesson_id] Отправляем запрос к {url} с initData: {init_data}")
+        return await self._make_request("GET", url, headers=headers)
+
+    async def get_videos_by_assignment_id(self, assignment_id: int, init_data: str):
+        """
+        Получает список видео для задания.
+        
+        Args:
+            assignment_id: ID задания
+            init_data: Telegram initData строка для заголовка X-Telegram-Init-Data
+            
+        Returns:
+            Словарь с результатами: {"count": int, "next": str|None, "previous": str|None, "results": list}
+        """
+        url = self._assignment_videos_list_url(assignment_id)
+        headers = {"X-Telegram-Init-Data": init_data}
+        logger.info(f"[get_videos_by_assignment_id] Отправляем запрос к {url} с initData: {init_data}")
+        return await self._make_request("GET", url, headers=headers)
 
 
 

@@ -1,4 +1,6 @@
 import aiofiles
+import logging
+from urllib.parse import quote
 from src.core.config import texts, bot
 from src.handlers.course import start_registeration_proccess
 from src.handlers.registration import full_name_proccess
@@ -13,10 +15,16 @@ from src.keyboards.main_menu_kb import (
 from src.misc.course_utils import get_item, get_item_text
 from src.misc.fabrics import create_back_button_handler
 from src.misc.validator import is_valid_url, is_all_fields_blank
+from src.misc.init_data_generator import generate_telegram_initdata
+from src.core.settings import application_settings, user_settings
+from src.core.config import texts as config_texts
 from src.states import AssignmentState
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
 import os
 from asgiref.sync import sync_to_async
+
+logger = logging.getLogger(__name__)
 
 
 async def assignment_handler(call: CallbackQuery, state: FSMContext):
@@ -33,7 +41,7 @@ async def assignment_handler(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text(
         text=text,
         disable_web_page_preview=True,
-        reply_markup=await assignment_kb(assignment['lesson'], assignment['id'], response['exists'])
+        reply_markup=await assignment_kb(assignment['lesson'], assignment['id'], response['exists'], assignment)
     )
 
 
@@ -194,12 +202,14 @@ async def finish_assignment_handler(call: CallbackQuery, state: FSMContext):
         files
     ]
     if is_all_fields_blank(array):
+        # Получаем lesson из state если доступен
+        lesson = data.get('lesson')
         await bot.edit_message_text(
             chat_id=call.from_user.id,
             message_id=data['bot_message_id'],
             text=texts['all_element_blank'],
             reply_markup=await lesson_details_kb(
-                data['lessons_page'], data['assignments']),
+                data['lessons_page'], data['assignments'], lesson),
             disable_web_page_preview=True
         )
         await state.set_state(None)
@@ -245,6 +255,124 @@ BACK_ASSIGNMENT_CALLBACKS = {
 }
 
 back_handler = create_back_button_handler(BACK_ASSIGNMENT_CALLBACKS)
+
+
+async def assignment_videos_pagination_handler(call: CallbackQuery, state: FSMContext):
+    """Обработчик пагинации для видео заданий"""
+    parts = call.data.split()
+    assignment_id = int(parts[1])
+    page = int(parts[2])
+    await show_assignment_videos_handler(call, state, page)
+
+
+async def show_assignment_videos_handler(call: CallbackQuery, state: FSMContext, page: int = 1):
+    """Обработчик для отображения списка видео задания с пагинацией"""
+    assignment_id = int(call.data.split()[1])
+    
+    # Получаем данные задания для возврата назад
+    data = await state.get_data()
+    assignments = data.get('assignments', [])
+    assignment = next((a for a in assignments if a['id'] == assignment_id), None)
+    
+    # Callback для возврата назад к заданию
+    back_callback = f"homework {assignment_id}"
+    
+    try:
+        # Проверяем, есть ли уже сохраненные видео в state для этого задания
+        saved_assignment_id = data.get('assignment_id')
+        all_videos = data.get('assignment_videos', [])
+        
+        # Если это первый запрос или другое задание - загружаем видео
+        if not all_videos or saved_assignment_id != assignment_id:
+            # Генерируем initData для API запроса (без query_id и signature - для этого достаточно)
+            init_data = generate_telegram_initdata(call.from_user.id, user_settings.BOT_TOKEN)
+            logger.info(f"[show_assignment_videos_handler] Загружаем видео для assignment_id={assignment_id}, user_id={call.from_user.id}")
+            
+            # Получаем список всех видео
+            videos_response = await application_client.get_videos_by_assignment_id(assignment_id, init_data)
+            
+            # Обрабатываем как словарь с results, так и список
+            if isinstance(videos_response, dict):
+                all_videos = videos_response.get('results', [])
+            elif isinstance(videos_response, list):
+                all_videos = videos_response
+            else:
+                all_videos = []
+            
+            # Сохраняем все видео в state
+            await state.update_data(assignment_videos=all_videos, assignment_id=assignment_id)
+        else:
+            # Используем сохраненные видео
+            logger.info(f"[show_assignment_videos_handler] Используем сохраненные видео для assignment_id={assignment_id}, страница {page}")
+        
+        if len(all_videos) == 0:
+            # Нет видео
+            await call.message.edit_text(
+                text=config_texts['video_not_found'],
+                reply_markup=None
+            )
+        else:
+            # Генерируем initData для URL плеера
+            init_data = generate_telegram_initdata(call.from_user.id, user_settings.BOT_TOKEN)
+            
+            # Пагинация: показываем по 4 видео на странице
+            videos_per_page = 4
+            start_idx = (page - 1) * videos_per_page
+            end_idx = start_idx + videos_per_page
+            videos = all_videos[start_idx:end_idx]
+            
+            # Создаем кнопки для видео (максимум 4)
+            buttons = []
+            for video in videos:
+                # Убираем расширение из названия файла
+                video_name = video['filename'].rsplit('.', 1)[0] if '.' in video['filename'] else video['filename']
+                # Передаем initData и back_callback через URL параметр для плеера
+                web_app_url = f"https://{application_settings.WEB_APP_URL}/player/?assignment={assignment_id}&video_id={video['id']}&init_data={quote(init_data)}&back_callback={quote(back_callback)}"
+                logger.info(f"[show_assignment_videos_handler] URL плеера для video_id={video['id']} с initData и back_callback: {web_app_url}")
+                buttons.append([
+                    InlineKeyboardButton(
+                        text=video_name,
+                        web_app=WebAppInfo(url=web_app_url)
+                    )
+                ])
+            
+            # Заполняем остаток пустыми кнопками до 4
+            while len(buttons) < videos_per_page:
+                buttons.append([
+                    InlineKeyboardButton(
+                        text=" ",
+                        callback_data="none"
+                    )
+                ])
+            
+            # Добавляем кнопки навигации
+            nav_buttons = []
+            if page > 1:
+                nav_buttons.append(InlineKeyboardButton(text="<", callback_data=f"page_view_assignment_videos {assignment_id} {page - 1}"))
+            nav_buttons.append(InlineKeyboardButton(text=" ", callback_data="none"))
+            if end_idx < len(all_videos):
+                nav_buttons.append(InlineKeyboardButton(text=">", callback_data=f"page_view_assignment_videos {assignment_id} {page + 1}"))
+            
+            if nav_buttons:
+                buttons.append(nav_buttons)
+            
+            # Добавляем кнопку "Назад" для возврата к заданию
+            buttons.append([
+                InlineKeyboardButton(
+                    text=config_texts['back_button'],
+                    callback_data=back_callback
+                )
+            ])
+            keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+            await call.message.edit_text(
+                text=config_texts['choose_video'],
+                reply_markup=keyboard
+            )
+    except Exception as e:
+        await call.message.edit_text(
+            text=f"Ошибка при получении видео: {str(e)}",
+            reply_markup=None
+        )
 
 
 def register_handler(view_router: Router, form_router: Router):
@@ -295,4 +423,12 @@ def register_handler(view_router: Router, form_router: Router):
     view_router.callback_query.register(
         finish_assignment_handler,
         F.data == "finish_assignment"
+    )
+    view_router.callback_query.register(
+        show_assignment_videos_handler,
+        F.data.startswith('show_assignment_videos')
+    )
+    view_router.callback_query.register(
+        assignment_videos_pagination_handler,
+        F.data.startswith('page_view_assignment_videos')
     )
