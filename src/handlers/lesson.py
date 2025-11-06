@@ -21,7 +21,7 @@ async def lessons_handler(call: CallbackQuery,
                           page: int = 1):
     data = await state.get_data()
     lessons = await application_client.get_lessons_by_course_id(
-        data['course_id'], page
+        data['course_id'], page, call.from_user.id
     )
     await state.update_data(lessons=lessons['results'],
                             lessons_page=page)
@@ -48,7 +48,7 @@ async def lesson_handler(call: CallbackQuery,
     text = get_item_text(texts, lesson)
 
     assignments = await application_client.get_assignments_by_lesson_id(
-        lesson['id']
+        lesson['id'], call.from_user.id
     )
     await state.update_data(assignments=assignments, lesson=lesson)
     await call.message.edit_text(

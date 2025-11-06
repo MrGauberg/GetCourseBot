@@ -39,13 +39,13 @@ class AplicationEndpoints:
     def _check_assignment_response_url(self, student_id, assignment_id):
         return f"{self.BASE_API_URL}/student/check-assignment-response/{student_id}/{assignment_id}/"
 
-    def _lesson_list_url(self, course_id, page):
+    def _lesson_list_url(self, course_id, page, user_id):
         # return f"{self.BASE_API_URL}/student-course/{course_id}/lessons/?page={page}"
-        return f"{self.BASE_API_URL}/courses/{course_id}/lessons/?page={page}&page_size=5"
+        return f"{self.BASE_API_URL}/courses/{course_id}/lessons/?page={page}&page_size=5&user_id={user_id}"
 
-    def _assignment_list_url(self, lesson_id):
+    def _assignment_list_url(self, lesson_id, user_id):
         # return f"{self.BASE_API_URL}/student-course/lessons/{lesson_id}/assignments"
-        return f"{self.BASE_API_URL}/courses/lessons/{lesson_id}/assignments"
+        return f"{self.BASE_API_URL}/courses/lessons/{lesson_id}/assignments?user_id={user_id}"
 
     def _get_tg_user(self, tg_id):
         return f"{self.BASE_API_URL}/student/get_student/{tg_id}/"
@@ -202,14 +202,14 @@ class ApplicationClient(AplicationEndpoints):
         url = self._student_courses_url(tg_user_id, instructor_id, page)
         return await self._make_request("GET", url)
 
-    async def get_lessons_by_course_id(self, course_id,  page: int):
+    async def get_lessons_by_course_id(self, course_id, page: int, user_id: int):
         return await self._make_request(
-            "GET", self._lesson_list_url(course_id, page)
+            "GET", self._lesson_list_url(course_id, page, user_id)
         )
 
-    async def get_assignments_by_lesson_id(self, lesson_id):
+    async def get_assignments_by_lesson_id(self, lesson_id, user_id: int):
         return await self._make_request(
-            "GET", self._assignment_list_url(lesson_id)
+            "GET", self._assignment_list_url(lesson_id, user_id)
         )
 
     async def create_assignment_response(self, data: Dict, files=None) -> Any:
