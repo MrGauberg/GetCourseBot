@@ -36,7 +36,7 @@ async def assignment_handler(call: CallbackQuery, state: FSMContext):
         call.from_user.id, assignment['id']
     )
 
-    text = get_item_text(texts, assignment)
+    text = get_item_text(texts, assignment, call.from_user.id)
 
     await call.message.edit_text(
         text=text,

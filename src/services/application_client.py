@@ -40,11 +40,9 @@ class AplicationEndpoints:
         return f"{self.BASE_API_URL}/student/check-assignment-response/{student_id}/{assignment_id}/"
 
     def _lesson_list_url(self, course_id, page, user_id):
-        # return f"{self.BASE_API_URL}/student-course/{course_id}/lessons/?page={page}"
         return f"{self.BASE_API_URL}/courses/{course_id}/lessons/?page={page}&page_size=5&user_id={user_id}"
 
     def _assignment_list_url(self, lesson_id, user_id):
-        # return f"{self.BASE_API_URL}/student-course/lessons/{lesson_id}/assignments"
         return f"{self.BASE_API_URL}/courses/lessons/{lesson_id}/assignments?user_id={user_id}"
 
     def _get_tg_user(self, tg_id):
