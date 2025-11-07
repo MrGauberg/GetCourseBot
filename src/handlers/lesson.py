@@ -45,7 +45,7 @@ async def lesson_handler(call: CallbackQuery,
     data = await state.get_data()
     lesson = await get_item(call,  data['lessons'])
 
-    text = get_item_text(texts, lesson, call.from_user.id)
+    text = get_item_text(texts, lesson, call.from_user.id, item_type="lesson")
 
     assignments = await application_client.get_assignments_by_lesson_id(
         lesson['id'], call.from_user.id
