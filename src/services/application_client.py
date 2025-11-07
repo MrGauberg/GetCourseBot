@@ -57,8 +57,8 @@ class AplicationEndpoints:
     def _lesson_videos_list_url(self, lesson_id):
         return f"{self.BASE_API_URL}/videos/lesson/{lesson_id}/list"
 
-    def _assignment_videos_list_url(self, assignment_id):
-        return f"{self.BASE_API_URL}/videos/assignment/{assignment_id}/list"
+    def _assignment_videos_list_url(self, assignment_id, user_id):
+        return f"{self.BASE_API_URL}/videos/assignment/{assignment_id}/list?user_id={user_id}"
 
 
 class ApplicationClient(AplicationEndpoints):
@@ -247,18 +247,19 @@ class ApplicationClient(AplicationEndpoints):
         logger.info(f"[get_videos_by_lesson_id] Отправляем запрос к {url} с initData: {init_data}")
         return await self._make_request("GET", url, headers=headers)
 
-    async def get_videos_by_assignment_id(self, assignment_id: int, init_data: str):
+    async def get_videos_by_assignment_id(self, assignment_id: int, init_data: str, user_id: int):
         """
         Получает список видео для задания.
         
         Args:
             assignment_id: ID задания
             init_data: Telegram initData строка для заголовка X-Telegram-Init-Data
+            user_id: Telegram ID пользователя
             
         Returns:
             Словарь с результатами: {"count": int, "next": str|None, "previous": str|None, "results": list}
         """
-        url = self._assignment_videos_list_url(assignment_id)
+        url = self._assignment_videos_list_url(assignment_id, user_id)
         headers = {"X-Telegram-Init-Data": init_data}
         logger.info(f"[get_videos_by_assignment_id] Отправляем запрос к {url} с initData: {init_data}")
         return await self._make_request("GET", url, headers=headers)

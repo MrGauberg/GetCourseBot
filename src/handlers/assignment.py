@@ -36,7 +36,7 @@ async def assignment_handler(call: CallbackQuery, state: FSMContext):
         call.from_user.id, assignment['id']
     )
 
-    text = get_item_text(texts, assignment, call.from_user.id)
+    text = get_item_text(texts, assignment, call.from_user.id, item_type="assignment")
 
     await call.message.edit_text(
         text=text,
@@ -289,7 +289,7 @@ async def show_assignment_videos_handler(call: CallbackQuery, state: FSMContext,
             logger.info(f"[show_assignment_videos_handler] Загружаем видео для assignment_id={assignment_id}, user_id={call.from_user.id}")
             
             # Получаем список всех видео
-            videos_response = await application_client.get_videos_by_assignment_id(assignment_id, init_data)
+            videos_response = await application_client.get_videos_by_assignment_id(assignment_id, init_data, call.from_user.id)
             
             # Обрабатываем как словарь с results, так и список
             if isinstance(videos_response, dict):

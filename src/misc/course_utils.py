@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse
@@ -21,39 +21,48 @@ async def get_item(call: CallbackQuery, items: List):
 
 
 
-def _add_user_id_to_url(url: str, user_id: int) -> str:
-    """Добавляет user_id в query параметры URL"""
+def _add_tracking_params_to_url(url: str,
+                                user_id: Optional[int] = None,
+                                item_type: Optional[str] = None) -> str:
+    """Добавляет параметры user_id и type в query URL (если переданы)."""
     if not url:
         return url
-    
+
     parsed = urlparse(url)
     query_params = parse_qs(parsed.query)
-    query_params['user_id'] = [str(user_id)]
-    
+
+    if user_id is not None:
+        query_params['user_id'] = [str(user_id)]
+
+    if item_type:
+        query_params['type'] = [item_type]
+
     new_query = urlencode(query_params, doseq=True)
     new_parsed = parsed._replace(query=new_query)
     return urlunparse(new_parsed)
 
 
-def get_item_text(texts: Dict, lesson: Dict, user_id: int = None) -> str:
+def get_item_text(texts: Dict,
+                  item: Dict,
+                  user_id: Optional[int] = None,
+                  item_type: str = "lesson") -> str:
     text = texts['lesson_details'].format(
-        lesson['title'],
-        lesson['content'],
+        item['title'],
+        item['content'],
     )
 
-    files = lesson.get("files_from_storage", [])
+    files = item.get("files_from_storage", [])
     # Фильтруем файлы - оставляем только документы (исключаем type "video")
     documents = [file for file in files if file.get("type") != "video"]
     if documents:
         materials = []
         for doc in documents:
             file_url = doc['url']
-            if user_id:
-                file_url = _add_user_id_to_url(file_url, user_id)
+            file_url = _add_tracking_params_to_url(file_url, user_id, item_type)
             materials.append(f"📄 <a href=\"{file_url}\"><b>{doc['name']}</b></a>")
         text = f"{text}\n\n{texts['materials']}\n" + "\n".join(materials)
 
-    video = lesson.get("video_url")
+    video = item.get("video_url")
     if video:
         text = f"{text}\n\n{texts['video'].format(video)}"
 
