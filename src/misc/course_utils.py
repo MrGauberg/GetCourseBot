@@ -1,8 +1,7 @@
 from typing import Dict, List, Optional
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
-from urllib.parse import quote
-
+from urllib.parse import urlparse, urlencode, parse_qs, urlunparse, quote
 from src.core.settings import application_settings
 
 
@@ -23,21 +22,33 @@ async def get_item(call: CallbackQuery, items: List):
 
 
 
-REDIRECT_ENDPOINT = "/api/v1/courses/link/redirect/"
+def _add_tracking_params_to_url(url: str,
+                                user_id: Optional[int] = None,
+                                item_type: Optional[str] = None) -> str:
+    """Добавляет параметры user_id и type в query URL (если переданы)."""
+    if not url:
+        return url
+
+    parsed = urlparse(url)
+    query_params = parse_qs(parsed.query)
+
+    if user_id is not None:
+        query_params['user_id'] = [str(user_id)]
+
+    if item_type:
+        query_params['type'] = [item_type]
+
+    new_query = urlencode(query_params, doseq=True)
+    new_parsed = parsed._replace(query=new_query)
+    return urlunparse(new_parsed)
 
 
-def build_redirect_url(raw_url: str,
-                       user_id: Optional[int],
-                       item_type: str) -> str:
-    """Формирует redirect-ссылку с логированием."""
-    if not raw_url or user_id is None or not item_type:
-        return raw_url
-
-    encoded_url = quote(raw_url, safe="")
+def build_redirect_url(original_url: str, user_id: int, item_type: str) -> str:
+    encoded_url = quote(original_url, safe="")
     base_url = application_settings.APPLICATION_URL.rstrip("/")
     return (
-        f"{base_url}{REDIRECT_ENDPOINT}?url={encoded_url}"
-        f"&user_id={user_id}&type={item_type}"
+        f"{base_url}/courses/link/redirect/?"
+        f"url={encoded_url}&user_id={user_id}&type={item_type}"
     )
 
 
@@ -56,13 +67,15 @@ def get_item_text(texts: Dict,
     if documents:
         materials = []
         for doc in documents:
-            file_url = build_redirect_url(doc['url'], user_id, item_type)
+            file_url = doc['url']
+            file_url = _add_tracking_params_to_url(file_url, user_id, item_type)
             materials.append(f"📄 <a href=\"{file_url}\"><b>{doc['name']}</b></a>")
         text = f"{text}\n\n{texts['materials']}\n" + "\n".join(materials)
 
     video = item.get("video_url")
     if video:
-        text = f"{text}\n\n{texts['video'].format(video)}"
+        video_link = build_redirect_url(video, user_id, item_type) if user_id is not None else video
+        text = f"{text}\n\n{texts['video'].format(video_link)}"
 
     return text
 
