@@ -2,6 +2,7 @@ from typing import Dict, List, Optional
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 from urllib.parse import urlparse, urlencode, parse_qs, urlunparse, quote
+from html import escape
 from src.core.settings import application_settings
 
 
@@ -69,13 +70,15 @@ def get_item_text(texts: Dict,
         for doc in documents:
             file_url = doc['url']
             file_url = _add_tracking_params_to_url(file_url, user_id, item_type)
-            materials.append(f"📄 <a href=\"{file_url}\"><b>{doc['name']}</b></a>")
+            safe_file_url = escape(file_url, quote=True)
+            materials.append(f"📄 <a href=\"{safe_file_url}\"><b>{doc['name']}</b></a>")
         text = f"{text}\n\n{texts['materials']}\n" + "\n".join(materials)
 
     video = item.get("video_url")
     if video:
         video_link = build_redirect_url(video, user_id, item_type) if user_id is not None else video
-        text = f"{text}\n\n{texts['video'].format(video_link)}"
+        safe_video_link = escape(video_link, quote=True)
+        text = f"{text}\n\n{texts['video'].format(safe_video_link)}"
 
     return text
 
