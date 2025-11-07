@@ -48,6 +48,10 @@ def _add_tracking_params_to_url(url: str,
         if lesson_id is not None:
             query_params['lesson_id'] = [str(lesson_id)]
     elif item_type == "assignment":
+        if course_id is not None:
+            query_params['course_id'] = [str(course_id)]
+        if lesson_id is not None:
+            query_params['lesson_id'] = [str(lesson_id)]
         if assignment_id is not None:
             query_params['assignment_id'] = [str(assignment_id)]
 
@@ -78,6 +82,10 @@ def build_redirect_url(original_url: str,
         if lesson_id is not None:
             query_params["lesson_id"] = str(lesson_id)
     elif item_type == "assignment":
+        if course_id is not None:
+            query_params["course_id"] = str(course_id)
+        if lesson_id is not None:
+            query_params["lesson_id"] = str(lesson_id)
         if assignment_id is not None:
             query_params["assignment_id"] = str(assignment_id)
 
