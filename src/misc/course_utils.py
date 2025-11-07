@@ -46,7 +46,7 @@ def _add_tracking_params_to_url(url: str,
 
 def build_redirect_url(original_url: str, user_id: int, item_type: str) -> str:
     encoded_url = quote(original_url, safe="")
-    base_url = application_settings.APPLICATION_URL.rstrip("/")
+    base_url = application_settings.WEB_APP_URL.rstrip("/")
     return (
         f"{base_url}/courses/link/redirect/?"
         f"url={encoded_url}&user_id={user_id}&type={item_type}"
@@ -79,7 +79,6 @@ def get_item_text(texts: Dict,
         video_link = build_redirect_url(video, user_id, item_type) if user_id is not None else video
         safe_video_link = escape(video_link, quote=True)
         text = f"{text}\n\n{texts['video'].format(safe_video_link)}"
-        print(f"{texts['video'].format(safe_video_link)}")
     return text
 
 
