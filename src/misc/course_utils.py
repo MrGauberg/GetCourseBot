@@ -79,7 +79,7 @@ def get_item_text(texts: Dict,
         video_link = build_redirect_url(video, user_id, item_type) if user_id is not None else video
         safe_video_link = escape(video_link, quote=True)
         text = f"{text}\n\n{texts['video'].format(safe_video_link)}"
-
+        print(f"{texts['video'].format(safe_video_link)}")
     return text
 
 
