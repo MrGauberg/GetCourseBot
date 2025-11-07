@@ -82,7 +82,7 @@ def build_redirect_url(original_url: str,
             query_params["assignment_id"] = str(assignment_id)
 
     query_string = urlencode(query_params, quote_via=quote)
-    return f"{base_host}/api/v1/courses/link/redirect/?{query_string}"
+    return f"{base_host}/courses/link/redirect/?{query_string}"
 
 
 def get_item_text(texts: Dict,
