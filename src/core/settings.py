@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Optional
 
 from pydantic_settings import BaseSettings as PydanticBaseSettings, SettingsConfigDict
-from os import path
 
 
 class BaseSettings(PydanticBaseSettings):
@@ -31,6 +30,7 @@ class UserSettings(BaseSettings):
     BOT_NAME: str
     EMAIL: str
     PASSWORD: str
+    TG_PROXY_URL: Optional[str] = None
 
 
 user_settings = UserSettings()

@@ -180,5 +180,7 @@ locales/*
 
 bot/migrations/*
 !bot/migrations/__init__.py
+collect_project_context.py
+code_snapshots/
 
 !*.env.example
